@@ -26,9 +26,19 @@ export function usePreferenceWidths(renderer) {
         if (!table() || resizeColumn) {
             return;
         }
-        const headers = [...table().querySelectorAll("thead th")];
+        const headers = [...(table().tHead?.rows[0]?.cells || [])];
         const columns = renderer.columns;
         const offset = renderer.hasSelectors ? 1 : 0;
+        // Timeline renderers merge model fields into custom cells and own their widths.
+        if (
+            !headers.length ||
+            columns.some((column, index) => {
+                const header = headers[index + offset];
+                return !header || (column.type === "field" && header.dataset.name !== column.name);
+            })
+        ) {
+            return;
+        }
         const missing = columns.some((column) => !naturalWidths.has(column.id));
         if (missing) {
             table().style.tableLayout = "auto";
