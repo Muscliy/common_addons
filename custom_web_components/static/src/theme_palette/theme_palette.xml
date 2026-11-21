@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_web_components.ThemePalette">
+        <div class="o_cwc_theme_palette" t-ref="paletteRoot">
+            <header class="o_cwc_theme_hero">
+                <div class="o_cwc_theme_hero_content">
+                    <div>
+                        <h1>主题颜色</h1>
+                        <p>当前页面真实加载的设计令牌与组件颜色。点击任意色块复制颜色值。</p>
+                    </div>
+                    <div class="o_cwc_theme_count" aria-label="颜色总数">
+                        <strong t-esc="totalColors"/>
+                        <span>个颜色令牌</span>
+                    </div>
+                </div>
+            </header>
+            <main class="o_cwc_theme_catalog">
+                <section t-foreach="groups" t-as="group" t-key="group.id" class="o_cwc_theme_group" t-att-data-group="group.id">
+                    <div class="o_cwc_theme_group_header">
+                        <div>
+                            <h2 t-esc="group.name"/>
+                            <p t-esc="group.description"/>
+                        </div>
+                        <span><t t-esc="group.tokens.length"/> 色</span>
+                    </div>
+                    <div class="o_cwc_theme_grid">
+                        <button t-foreach="group.tokens" t-as="token" t-key="token.id" type="button"
+                                class="o_cwc_theme_token" t-att-data-token="token.id"
+                                t-att-aria-label="copyLabel(token)" t-on-click="() => this.copyColor(token)">
+                            <span class="o_cwc_theme_swatch" aria-hidden="true">
+                                <span class="o_cwc_theme_swatch_color" t-att-style="swatchStyle(token)"/>
+                                <span t-if="token.probeClass" class="o_cwc_theme_probe"
+                                      t-att-class="token.probeClass" t-att-data-color-probe="token.id"/>
+                            </span>
+                            <span class="o_cwc_theme_token_meta">
+                                <span class="o_cwc_theme_token_name" t-esc="token.name"/>
+                                <code t-esc="token.cssName"/>
+                                <span class="o_cwc_theme_token_value" t-esc="colors[token.id] || '读取中…'"/>
+                            </span>
+                            <i class="fa fa-copy" aria-hidden="true"/>
+                        </button>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </t>
+</templates>

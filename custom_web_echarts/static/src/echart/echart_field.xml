@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_web_echarts.EChartField">
+        <div t-if="parsed.error" class="text-danger" role="alert" t-esc="parsed.error"/>
+        <EChart t-else="" option="parsed.option" height="props.height"
+                theme="props.theme" ariaLabel="ariaLabel"/>
+    </t>
+</templates>

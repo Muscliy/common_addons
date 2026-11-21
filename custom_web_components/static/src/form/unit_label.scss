@@ -1,0 +1,46 @@
+// Shared "(unit)" marker used after numeric inputs and inside form labels.
+//
+// Odoo renders a field as div.o_field_widget > div.o_many2one > a. When that
+// markup sits inside the inline span, a block-level wrapper splits the
+// parentheses and the unit onto separate lines and lets the flex row squeeze
+// the label to a single character. Every wrapper in the label must stay inline.
+.o_goal_label_unit {
+    flex: 0 0 auto;
+    color: $o-brand-primary;
+    font-size: .8125rem;
+    font-weight: 600;
+    white-space: nowrap;
+
+    > .o_field_widget {
+        display: inline;
+        width: auto !important;
+        margin: 0;
+        color: inherit;
+        font-weight: inherit;
+
+        .o_many2one,
+        .o_field_many2one_selection {
+            display: inline;
+            width: auto !important;
+            margin: 0;
+        }
+
+        a {
+            display: inline;
+            width: auto !important;
+            margin: 0;
+            color: inherit;
+            text-decoration: none;
+        }
+    }
+}
+
+// Keep a value and its unit together: a fixed, readable input width prevents the
+// input from stretching to the row edge and leaving the unit detached.
+.o_form_view .o_row.o_goal_unit_row > .o_field_widget {
+    flex: 0 1 12rem !important;
+    width: 12rem !important;
+    min-width: 6rem;
+    max-width: 100%;
+    margin: 0;
+}

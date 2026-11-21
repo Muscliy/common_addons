@@ -1,0 +1,12 @@
+<odoo>
+    <record id="preference_own_user" model="ir.rule">
+        <field name="name">Web component preferences: own user only</field>
+        <field name="model_id" ref="model_web_component_preference"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+    </record>
+    <record id="playground_own_user" model="ir.rule">
+        <field name="name">Component Playground: own demo rows only</field>
+        <field name="model_id" ref="model_web_component_playground_order"/>
+        <field name="domain_force">[('user_id', '=', user.id)]</field>
+    </record>
+</odoo>

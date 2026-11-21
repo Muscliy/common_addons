@@ -1,0 +1,14 @@
+// Ant Design color foundation. This file is loaded before the default
+// variables so every backend component is compiled with the same brand color.
+$o-community-color: #1677ff;
+$o-brand-odoo: #1677ff;
+$o-brand-primary: #1677ff;
+$o-action: #1677ff;
+$o-main-link-color: #0958d9;
+$o-input-border-required: #1677ff;
+
+// A semantic status for results that exceed their target.
+$o-exceed: #5F4B8B !default;
+$exceed: $o-exceed !default;
+$theme-colors: () !default;
+$theme-colors: map-merge($theme-colors, ("exceed": $exceed));

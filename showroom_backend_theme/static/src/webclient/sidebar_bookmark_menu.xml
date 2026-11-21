@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="showroom_backend_theme.SidebarBookmarkMenu">
+        <DropdownItem class="'o_showroom_add_bookmark'" onSelected="() => this.entries.addBookmark()">
+            <i class="fa fa-bookmark-o me-2" aria-hidden="true"/>添加到书签
+        </DropdownItem>
+    </t>
+</templates>

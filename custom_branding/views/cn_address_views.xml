@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- 中国地址视图：由 base.cn.address_view_id 引用，联系人表单、地址页签和地址弹窗统一使用 -->
+    <record id="view_partner_address_form_cn_global" model="ir.ui.view">
+        <field name="name">cn.partner.address.form</field>
+        <field name="model">res.partner</field>
+        <field name="priority" eval="900"/>
+        <field name="inherit_id" eval="False"/>
+        <field name="arch" type="xml">
+            <form>
+                <div class="o_address_format">
+                    <label for="abt_full_address" string="完整地址" class="visually-hidden"/>
+                    <field name="abt_full_address" placeholder="填写完整地址，例如浙江省宁波市鄞州区某某路88号" class="w-100"
+                           readonly="type == 'contact' and parent_id"/>
+                    <field name="abt_address_original" invisible="1" force_save="1"/>
+                    <field name="abt_address_hint" invisible="1"/>
+                    <details class="mt-1">
+                        <summary class="text-muted py-2">修改省市等信息</summary>
+                        <div class="mt-2">
+                            <field name="state_id" placeholder="省/直辖市" options="{'no_open': True, 'no_quick_create': True}"
+                                   context="{'country_id': country_id, 'default_country_id': country_id}" readonly="type == 'contact' and parent_id"/>
+                            <field name="city" placeholder="城市" readonly="type == 'contact' and parent_id"/>
+                            <field name="abt_address_district" invisible="1"/>
+                            <field name="street" placeholder="区县、街道及门牌号" readonly="type == 'contact' and parent_id"/>
+                            <field name="street2" placeholder="补充地址" readonly="type == 'contact' and parent_id"/>
+                            <field name="zip" placeholder="邮政编码" readonly="type == 'contact' and parent_id"/>
+                            <field name="country_id" placeholder="国家/地区" options="{'no_open': True, 'no_create': True}"
+                                   readonly="type == 'contact' and parent_id"/>
+                        </div>
+                    </details>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_partner_form_header_layout" model="ir.ui.view">
+        <field name="name">res.partner.form.header.layout.cn</field>
+        <field name="model">res.partner</field>
+        <field name="inherit_id" ref="base.view_partner_form"/>
+        <field name="priority">95</field>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/group[1]/group[1]" position="attributes">
+                <attribute name="colspan">2</attribute>
+                <attribute name="col">4</attribute>
+            </xpath>
+            <xpath expr="//sheet/group[1]/group[2]" position="attributes">
+                <attribute name="name">abt_partner_identity</attribute>
+                <attribute name="colspan">2</attribute>
+                <attribute name="col">2</attribute>
+            </xpath>
+            <xpath expr="//sheet/group[1]/group[1]" position="inside">
+                <xpath expr="//sheet/group[1]/group[2]/field[@name='function']" position="move"/>
+            </xpath>
+            <group name="abt_partner_identity" position="inside">
+                <group name="abt_partner_identity_left"/>
+                <group name="abt_partner_identity_right"/>
+            </group>
+            <group name="abt_partner_identity_left" position="inside">
+                <xpath expr="//group[@name='abt_partner_identity']/field[@name='vat']" position="move"/>
+                <xpath expr="//group[@name='abt_partner_identity']/field[@name='lang']" position="move"/>
+            </group>
+            <group name="abt_partner_identity_right" position="inside">
+                <xpath expr="//group[@name='abt_partner_identity']/field[@name='website']" position="move"/>
+                <xpath expr="//group[@name='abt_partner_identity']/field[@name='category_id']" position="move"/>
+            </group>
+            <xpath expr="//sheet/group[1]" position="inside">
+                <group name="abt_partner_address_row" colspan="2" col="2"/>
+            </xpath>
+            <group name="abt_partner_address_row" position="inside">
+                <xpath expr="//sheet/group[1]/group[1]/span[@name='address_name']" position="move"/>
+                <xpath expr="//sheet/group[1]/group[1]/div[hasclass('o_address_format')]" position="move"/>
+            </group>
+        </field>
+    </record>
+
+    <!-- 员工家庭地址 -->
+    <record id="view_employee_form_address_cn" model="ir.ui.view">
+        <field name="name">hr.employee.form.address.cn</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//page[@name='personal_information']//div[hasclass('o_address_format')]" position="replace">
+                <div class="o_address_format">
+                    <field name="private_country_id" placeholder="国家/地区" class="o_address_country" options="{'no_open': True, 'no_create': True}"/>
+                    <field name="private_state_id" placeholder="省/直辖市" class="o_address_state" options="{'no_open': True, 'no_create': True}" context="{'default_country_id': private_country_id}" domain="[('country_id', '=', private_country_id)]"/>
+                    <field name="private_city" placeholder="城市/区县" class="o_address_city"/>
+                    <field name="private_zip" placeholder="邮政编码" class="o_address_zip"/>
+                    <field name="private_street" placeholder="街道、门牌号等详细地址..." class="o_address_street"/>
+                    <field name="private_street2" placeholder="楼栋、单元（选填）..." class="o_address_street"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- 银行档案地址 -->
+    <record id="view_res_bank_form_address_cn" model="ir.ui.view">
+        <field name="name">res.bank.form.address.cn</field>
+        <field name="model">res.bank</field>
+        <field name="inherit_id" ref="base.view_res_bank_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='address_details']/div[hasclass('o_address_format')]" position="replace">
+                <div class="o_address_format">
+                    <field name="country" placeholder="国家/地区" class="o_address_country" options="{'no_open': True, 'no_create': True}"/>
+                    <field name="state" placeholder="省/直辖市" class="o_address_state" options="{'no_open': True}"/>
+                    <field name="city" placeholder="城市/区县" class="o_address_city"/>
+                    <field name="zip" placeholder="邮政编码" class="o_address_zip"/>
+                    <field name="street" placeholder="街道、门牌号等详细地址..." class="o_address_street"/>
+                    <field name="street2" placeholder="楼栋、单元（选填）..." class="o_address_street"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

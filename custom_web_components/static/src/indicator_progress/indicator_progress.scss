@@ -1,0 +1,60 @@
+.o_indicator_progress {
+    width: 100%;
+    font-variant-numeric: tabular-nums;
+
+    .o_indicator_progress_visual {
+        position: relative;
+    }
+
+    .o_indicator_progress_track {
+        height: 12px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: $o-gray-300;
+        box-shadow: inset 0 0 0 1px rgba($o-main-text-color, .12);
+    }
+
+    .o_indicator_progress_fill {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: currentColor;
+    }
+
+    .o_indicator_progress_target {
+        position: absolute;
+        top: 50%;
+        width: 7px;
+        height: 19px;
+        transform: translate(-50%, -50%);
+        border: 2px solid #07101d;
+        border-radius: 5px;
+        background: #eef4fb;
+        box-shadow:
+            0 0 0 1px rgba(255, 255, 255, .2),
+            0 2px 7px rgba(0, 0, 0, .45);
+    }
+
+    .o_indicator_progress_values {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin-top: 12px;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .o_indicator_progress_actual {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .o_indicator_progress_target_value {
+        min-width: 0;
+        color: $o-main-text-color;
+        text-align: right;
+        overflow-wrap: anywhere;
+    }
+}

@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<templates xml:space="preserve">
+    <t t-name="custom_web_components.ComponentCatalog">
+        <main class="o_cwc_component_catalog" t-ref="catalogRoot">
+            <header class="o_cwc_catalog_header">
+                <div class="o_cwc_catalog_intro">
+                    <span class="o_cwc_catalog_eyebrow">UI REFERENCE / 01</span>
+                    <h1>组件</h1>
+                    <p>按类型浏览当前后台可用的界面组件、交互方式与基础用法。</p>
+                </div>
+                <div class="o_cwc_catalog_summary" aria-label="目录统计">
+                    <strong t-esc="totalComponents"/>
+                    <span>种组件</span>
+                    <small>6 个类别 · 实时示例</small>
+                </div>
+                <label class="o_cwc_catalog_search">
+                    <i class="fa fa-search" aria-hidden="true"/>
+                    <span class="visually-hidden">搜索组件</span>
+                    <input
+                        type="search"
+                        placeholder="搜索名称、用途或关键词…"
+                        t-att-value="state.query"
+                        t-on-input="onSearch"
+                    />
+                    <button
+                        t-if="state.query"
+                        type="button"
+                        title="清空搜索"
+                        aria-label="清空搜索"
+                        t-on-click="clearSearch"
+                    >
+                        <i class="fa fa-times" aria-hidden="true"/>
+                    </button>
+                    <span t-esc="visibleCount + ' / ' + totalComponents"/>
+                </label>
+            </header>
+
+            <div class="o_cwc_catalog_layout">
+                <aside class="o_cwc_catalog_index" aria-label="组件分类">
+                    <div class="o_cwc_catalog_index_label">目录</div>
+                    <button
+                        t-foreach="visibleGroups"
+                        t-as="group"
+                        t-key="group.id"
+                        type="button"
+                        t-att-class="{ active: state.activeCategory === group.id }"
+                        t-on-click="() => this.scrollToCategory(group.id)"
+                    >
+                        <i t-att-class="'fa ' + group.icon" aria-hidden="true"/>
+                        <span t-esc="group.name"/>
+                        <small t-esc="group.components.length"/>
+                    </button>
+                </aside>
+
+                <div class="o_cwc_catalog_content">
+                    <section
+                        t-foreach="visibleGroups"
+                        t-as="group"
+                        t-key="group.id"
+                        class="o_cwc_catalog_group"
+                        t-att-data-category="group.id"
+                    >
+                        <div class="o_cwc_catalog_group_heading">
+                            <div>
+                                <span t-esc="'0' + (group_index + 1)"/>
+                                <i t-att-class="'fa ' + group.icon" aria-hidden="true"/>
+                            </div>
+                            <h2 t-esc="group.name"/>
+                            <p t-esc="group.description"/>
+                        </div>
+
+                        <article
+                            t-foreach="group.components"
+                            t-as="component"
+                            t-key="component.id"
+                            class="o_cwc_component_entry"
+                            t-att-data-component="component.id"
+                        >
+                            <div class="o_cwc_component_meta">
+                                <span class="o_cwc_component_number" t-esc="(group_index + 1) + '.' + (component_index + 1)"/>
+                                <h3>
+                                    <t t-esc="component.name"/>
+                                    <small t-esc="component.englishName"/>
+                                </h3>
+                                <p t-esc="component.description"/>
+                            </div>
+
+                            <div class="o_cwc_component_example">
+                                <div class="o_cwc_component_stage">
+                                    <t t-if="component.id === 'button'">
+                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                            <button type="button" class="btn btn-primary">主要操作</button>
+                                            <button type="button" class="btn btn-secondary">次要操作</button>
+                                            <button type="button" class="btn btn-outline-primary">描边按钮</button>
+                                            <button type="button" class="btn btn-danger">危险操作</button>
+                                            <button type="button" class="btn btn-link">文字按钮</button>
+                                            <button type="button" class="btn btn-primary" disabled="disabled">已禁用</button>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'icon'">
+                                        <div class="o_cwc_icon_examples">
+                                            <span><i class="fa fa-search"/><small>search</small></span>
+                                            <span><i class="fa fa-pencil"/><small>edit</small></span>
+                                            <span><i class="fa fa-trash"/><small>delete</small></span>
+                                            <span><i class="fa fa-download"/><small>download</small></span>
+                                            <span><i class="fa fa-cog"/><small>settings</small></span>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'typography'">
+                                        <div class="o_cwc_type_examples">
+                                            <h3>页面标题 <small>24 / Semibold</small></h3>
+                                            <h5>区块标题 <small>16 / Semibold</small></h5>
+                                            <p>正文用于承载主要信息，保持清晰而稳定的阅读节奏。</p>
+                                            <small class="text-muted">辅助信息 · 更新于 10:24</small>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'link'">
+                                        <div class="d-flex flex-wrap gap-4">
+                                            <a href="#" t-on-click.prevent="() => {}">默认链接</a>
+                                            <a href="#" class="fw-semibold" t-on-click.prevent="() => {}">强调链接 <i class="fa fa-arrow-right ms-1"/></a>
+                                            <span class="text-muted">已访问资源</span>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'divider'">
+                                        <div class="w-100">
+                                            <span class="small text-muted">基础信息</span>
+                                            <hr class="my-3"/>
+                                            <div class="o_cwc_divider_label"><span>或者</span></div>
+                                        </div>
+                                    </t>
+
+                                    <t t-elif="component.id === 'grid'">
+                                        <div class="container-fluid p-0 o_cwc_grid_demo">
+                                            <div class="row g-2">
+                                                <div class="col-4"><span>4 / 12</span></div>
+                                                <div class="col-8"><span>8 / 12</span></div>
+                                                <div class="col-6"><span>6 / 12</span></div>
+                                                <div class="col-6"><span>6 / 12</span></div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'stack'">
+                                        <div class="d-flex flex-column gap-2 o_cwc_stack_demo">
+                                            <span>客户名称</span><span>联系人</span><span>跟进计划</span>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'spacing'">
+                                        <div class="o_cwc_spacing_demo">
+                                            <div class="p-1">4</div><div class="p-2">8</div><div class="p-3">16</div><div class="p-4">24</div>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'responsive'">
+                                        <div class="o_cwc_responsive_demo">
+                                            <div><i class="fa fa-mobile"/><span>单列</span><small>&lt; 768px</small></div>
+                                            <i class="fa fa-long-arrow-right"/>
+                                            <div><i class="fa fa-desktop"/><span>双列</span><small>≥ 768px</small></div>
+                                        </div>
+                                    </t>
+
+                                    <t t-elif="component.id === 'breadcrumb'">
+                                        <nav aria-label="面包屑">
+                                            <ol class="breadcrumb mb-0">
+                                                <li class="breadcrumb-item"><a href="#" t-on-click.prevent="() => {}">开发工具</a></li>
+                                                <li class="breadcrumb-item"><a href="#" t-on-click.prevent="() => {}">组件</a></li>
+                                                <li class="breadcrumb-item active" aria-current="page">导航</li>
+                                            </ol>
+                                        </nav>
+                                    </t>
+                                    <t t-elif="component.id === 'tabs'">
+                                        <div class="w-100">
+                                            <ul class="nav nav-tabs" role="tablist">
+                                                <li class="nav-item" t-foreach="['overview', 'activity', 'settings']" t-as="tab" t-key="tab">
+                                                    <button
+                                                        type="button"
+                                                        role="tab"
+                                                        t-att-data-tab="tab"
+                                                        t-att-class="'nav-link ' + (state.activeTab === tab ? 'active' : '')"
+                                                        t-on-click="() => this.setActiveTab(tab)"
+                                                        t-esc="{ overview: '概览', activity: '动态', settings: '设置' }[tab]"
+                                                    />
+                                                </li>
+                                            </ul>
+                                            <div class="o_cwc_tab_panel" t-esc="'当前内容：' + { overview: '概览', activity: '动态', settings: '设置' }[state.activeTab]"/>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'pagination'">
+                                        <nav aria-label="分页">
+                                            <ul class="pagination mb-0">
+                                                <li class="page-item" t-att-class="{ disabled: state.page === 1 }"><button type="button" class="page-link" t-on-click="() => this.setPage(Math.max(1, state.page - 1))">上一页</button></li>
+                                                <li class="page-item" t-foreach="[1, 2, 3]" t-as="page" t-key="page" t-att-class="{ active: state.page === page }"><button type="button" class="page-link" t-on-click="() => this.setPage(page)" t-esc="page"/></li>
+                                                <li class="page-item" t-att-class="{ disabled: state.page === 3 }"><button type="button" class="page-link" t-on-click="() => this.setPage(Math.min(3, state.page + 1))">下一页</button></li>
+                                            </ul>
+                                        </nav>
+                                    </t>
+                                    <t t-elif="component.id === 'dropdown'">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <Dropdown>
+                                                <button type="button" class="btn btn-secondary o-dropdown-caret">更多操作</button>
+                                                <t t-set-slot="content">
+                                                    <DropdownItem onSelected="() => this.chooseDropdown('编辑记录')"><i class="fa fa-pencil me-2"/>编辑记录</DropdownItem>
+                                                    <DropdownItem onSelected="() => this.chooseDropdown('导出数据')"><i class="fa fa-download me-2"/>导出数据</DropdownItem>
+                                                    <div class="dropdown-divider" role="separator"/>
+                                                    <DropdownItem class="'text-danger'" onSelected="() => this.chooseDropdown('删除记录')"><i class="fa fa-trash me-2"/>删除记录</DropdownItem>
+                                                </t>
+                                            </Dropdown>
+                                            <small class="text-muted" t-esc="state.dropdownChoice"/>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'steps'">
+                                        <ol class="o_cwc_steps">
+                                            <li class="is-complete"><span><i class="fa fa-check"/></span><small>填写资料</small></li>
+                                            <li class="is-active"><span>2</span><small>确认信息</small></li>
+                                            <li><span>3</span><small>完成</small></li>
+                                        </ol>
+                                    </t>
+
+                                    <t t-elif="component.id === 'input'">
+                                        <div class="o_cwc_form_demo"><label class="form-label">客户名称</label><input class="form-control" placeholder="请输入客户名称"/><small class="form-text">使用完整的工商注册名称。</small></div>
+                                    </t>
+                                    <t t-elif="component.id === 'textarea'">
+                                        <div class="o_cwc_form_demo"><label class="form-label">备注</label><textarea class="form-control" rows="3" placeholder="补充背景或注意事项…"/></div>
+                                    </t>
+                                    <t t-elif="component.id === 'select'">
+                                        <div class="o_cwc_form_demo"><label class="form-label">负责人</label><select class="form-select"><option>陈晓 · 销售一组</option><option>林桐 · 销售二组</option></select></div>
+                                    </t>
+                                    <t t-elif="component.id === 'checkbox'">
+                                        <div class="d-flex flex-column gap-2">
+                                            <label class="form-check"><input class="form-check-input" type="checkbox" checked="checked"/><span class="form-check-label">邮件通知</span></label>
+                                            <label class="form-check"><input class="form-check-input" type="checkbox"/><span class="form-check-label">短信通知</span></label>
+                                            <label class="form-check"><input class="form-check-input" type="checkbox" disabled="disabled"/><span class="form-check-label text-muted">已禁用选项</span></label>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'radio'">
+                                        <div class="d-flex flex-wrap gap-4">
+                                            <label class="form-check"><input class="form-check-input" type="radio" name="cwc_priority" checked="checked"/><span class="form-check-label">普通</span></label>
+                                            <label class="form-check"><input class="form-check-input" type="radio" name="cwc_priority"/><span class="form-check-label">紧急</span></label>
+                                            <label class="form-check"><input class="form-check-input" type="radio" name="cwc_priority"/><span class="form-check-label">阻塞</span></label>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'switch'">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <button type="button" class="o_cwc_switch" role="switch" t-att-aria-checked="state.switchOn ? 'true' : 'false'" t-att-class="{ active: state.switchOn }" t-on-click="toggleSwitch"><span/></button>
+                                            <span t-esc="state.switchOn ? '自动保存已开启' : '自动保存已关闭'"/>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'input-group'">
+                                        <div class="o_cwc_form_demo"><label class="form-label">合同金额</label><div class="input-group"><span class="input-group-text">¥</span><input class="form-control" value="28,800"/><span class="input-group-text">CNY</span></div></div>
+                                    </t>
+                                    <t t-elif="component.id === 'range'">
+                                        <div class="o_cwc_form_demo"><label class="form-label d-flex justify-content-between"><span>完成度</span><span>64%</span></label><input class="form-range" type="range" min="0" max="100" value="64"/></div>
+                                    </t>
+                                    <t t-elif="component.id === 'date'">
+                                        <div class="o_cwc_form_demo"><label class="form-label">计划日期</label><input class="form-control" type="date" value="2026-10-07"/></div>
+                                    </t>
+                                    <t t-elif="component.id === 'upload'">
+                                        <div class="o_cwc_form_demo"><label class="form-label">上传附件</label><input class="form-control" type="file"/><small class="form-text">支持 PDF、PNG，单个文件不超过 10 MB。</small></div>
+                                    </t>
+
+                                    <t t-elif="component.id === 'badge'">
+                                        <div class="d-flex flex-wrap align-items-center gap-2">
+                                            <span class="badge text-bg-primary">进行中</span><span class="badge text-bg-success">已完成</span><span class="badge text-bg-warning">待确认</span><span class="badge text-bg-danger">已阻塞</span><span class="badge rounded-pill text-bg-secondary">12</span>
+                                        </div>
+                                    </t>
+                                    <t t-elif="component.id === 'tag'">
+                                        <div class="d-flex flex-wrap gap-2"><span class="o_cwc_tag">企业客户</span><span class="o_cwc_tag is-blue">重点跟进</span><span class="o_cwc_tag is-removable">华东区 <button type="button" aria-label="移除华东区"><i class="fa fa-times"/></button></span></div>
+                                    </t>
+                                    <t t-elif="component.id === 'avatar'">
+                                        <div class="d-flex align-items-end gap-3"><span class="o_cwc_avatar is-sm">林</span><span class="o_cwc_avatar">陈</span><span class="o_cwc_avatar is-lg">周</span><span class="o_cwc_avatar is-group"><b>+8</b></span></div>
+                                    </t>
+                                    <t t-elif="component.id === 'card'">
+                                        <div class="card o_cwc_card_demo"><div class="card-body"><div class="d-flex justify-content-between align-items-start"><div><small class="text-muted">本月合同额</small><h3 class="mb-1">¥ 284,600</h3></div><span class="badge text-bg-success">+12.4%</span></div><p class="card-text text-muted mb-0">较上月增加 ¥31,400</p></div></div>
+                                    </t>
+                                    <t t-elif="component.id === 'table'">
+                                        <div class="table-responsive w-100"><table class="table table-hover align-middle mb-0"><thead><tr><th>客户</th><th>状态</th><th class="text-end">金额</th></tr></thead><tbody><tr><td>远山科技</td><td><span class="badge text-bg-success">已签约</span></td><td class="text-end">¥ 48,000</td></tr><tr><td>白鹭设计</td><td><span class="badge text-bg-warning">跟进中</span></td><td class="text-end">¥ 32,600</td></tr></tbody></table></div>
+                                    </t>
+                                    <t t-elif="component.id === 'list'">
+                                        <div class="list-group w-100"><div class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fa fa-file-text-o me-2 text-muted"/>产品需求文档</span><small class="text-muted">2 分钟前</small></div><div class="list-group-item d-flex justify-content-between align-items-center"><span><i class="fa fa-file-pdf-o me-2 text-danger"/>合作协议.pdf</span><small class="text-muted">昨天</small></div></div>
+                                    </t>
+                                    <t t-elif="component.id === 'empty'">
+                                        <div class="o_cwc_empty_state"><i class="fa fa-inbox"/><strong>还没有数据</strong><span>创建第一条记录后，内容会显示在这里。</span><button type="button" class="btn btn-primary btn-sm">新建记录</button></div>
+                                    </t>
+                                    <t t-elif="component.id === 'progress'">
+                                        <div class="o_cwc_progress_demo"><div class="d-flex justify-content-between"><span>资料迁移</span><strong t-esc="state.progress + '%'"/></div><div class="progress"><div class="progress-bar" role="progressbar" t-att-style="'width: ' + state.progress + '%'" t-att-aria-valuenow="state.progress" aria-valuemin="0" aria-valuemax="100"/></div><div class="btn-group btn-group-sm"><button type="button" class="btn btn-outline-secondary" t-on-click="() => this.adjustProgress(-10)">−10</button><button type="button" class="btn btn-outline-secondary" t-on-click="() => this.adjustProgress(10)">+10</button></div></div>
+                                    </t>
+                                    <t t-elif="component.id === 'indicator-progress'">
+                                        <div class="o_cwc_indicator_progress_demo">
+                                            <div>
+                                                <span><strong>成功</strong><small>实际 120 / 目标 100</small></span>
+                                                <IndicatorProgress actual="120" target="100" tone="'success'" ariaLabel="'成功：实际120，目标100'" actualText="'实际 120次'" targetText="'目标 100次'"/>
+                                            </div>
+                                            <div>
+                                                <span><strong>警告</strong><small>实际 90 / 目标 100</small></span>
+                                                <IndicatorProgress actual="90" target="100" tone="'warning'" ariaLabel="'警告：实际90，目标100'" actualText="'实际 90%'" targetText="'目标 100%'"/>
+                                            </div>
+                                            <div>
+                                                <span><strong>危险</strong><small>实际 45 / 目标 100</small></span>
+                                                <IndicatorProgress actual="45" target="100" tone="'danger'" ariaLabel="'危险：实际45，目标100'" actualText="'实际 45万元'" targetText="'目标 100万元'"/>
+                                            </div>
+                                        </div>
+                                    </t>
+
+                                    <t t-elif="component.id === 'alert'">
+                                        <div class="d-flex flex-column gap-2 w-100"><div class="alert alert-success mb-0"><i class="fa fa-check-circle me-2"/><strong>保存成功。</strong> 修改已同步。</div><div class="alert alert-warning mb-0"><i class="fa fa-exclamation-triangle me-2"/><strong>需要确认。</strong> 还有未填写字段。</div><div class="alert alert-danger mb-0"><i class="fa fa-times-circle me-2"/><strong>提交失败。</strong> 请检查网络连接。</div></div>
+                                    </t>
+                                    <t t-elif="component.id === 'notification'">
+                                        <div class="d-flex flex-wrap gap-2"><button type="button" class="btn btn-success" t-on-click="() => this.showNotification('success')">成功通知</button><button type="button" class="btn btn-warning" t-on-click="() => this.showNotification('warning')">警告通知</button><button type="button" class="btn btn-danger" t-on-click="() => this.showNotification('danger')">错误通知</button></div>
+                                    </t>
+                                    <t t-elif="component.id === 'dialog'">
+                                        <div class="o_cwc_dialog_preview"><div><i class="fa fa-window-maximize"/><span>标准确认对话框</span><small>标题、说明、确认与取消操作</small></div><button type="button" class="btn btn-primary" t-on-click="openDialog">打开对话框</button></div>
+                                    </t>
+                                    <t t-elif="component.id === 'spinner'">
+                                        <div class="d-flex align-items-center gap-4"><span class="spinner-border text-primary" role="status"><span class="visually-hidden">加载中</span></span><span class="spinner-border spinner-border-sm text-secondary" role="status"/><span class="d-flex align-items-center gap-2"><span class="spinner-grow spinner-grow-sm text-success" role="status"/>正在同步数据…</span></div>
+                                    </t>
+                                    <t t-elif="component.id === 'skeleton'">
+                                        <div class="o_cwc_skeleton"><span class="o_cwc_skeleton_avatar"/><div><span/><span/><span/></div></div>
+                                    </t>
+                                    <t t-else="">
+                                        <div class="d-flex flex-wrap gap-4"><span class="o_cwc_status is-success"><i/>运行正常</span><span class="o_cwc_status is-warning"><i/>性能波动</span><span class="o_cwc_status is-danger"><i/>服务中断</span><span class="o_cwc_status is-muted"><i/>尚未启用</span></div>
+                                    </t>
+                                </div>
+
+                                <div class="o_cwc_component_code">
+                                    <code t-esc="component.snippet"/>
+                                    <button type="button" t-att-aria-label="'复制 ' + component.name + ' 示例代码'" t-on-click="() => this.copySnippet(component)">
+                                        <i class="fa fa-clone" aria-hidden="true"/>
+                                        <span>复制</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </article>
+                    </section>
+
+                    <div t-if="!visibleGroups.length" class="o_cwc_catalog_no_results">
+                        <i class="fa fa-search" aria-hidden="true"/>
+                        <h2>没有找到对应组件</h2>
+                        <p>尝试搜索“表格”“输入”“警告”或英文组件名。</p>
+                        <button type="button" class="btn btn-primary" t-on-click="clearSearch">查看全部组件</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </t>
+</templates>

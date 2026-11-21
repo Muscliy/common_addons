@@ -1,0 +1,4 @@
+// Match the frontend's filled-button variant, including every native state.
+.btn-fill-exceed {
+    @include button-variant($exceed, $exceed);
+}

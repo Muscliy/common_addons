@@ -1,0 +1,107 @@
+.cwc_column_settings {
+    width: 350px;
+    max-width: calc(100vw - 24px);
+    .cwc_settings_heading {
+        display: grid;
+        grid-template-columns: 1fr 44px 44px;
+        span:not(:first-child) { text-align: center; }
+    }
+    .cwc_settings_columns { max-height: 45vh; overflow-y: auto; }
+    .cwc_settings_row {
+        position: relative;
+        display: grid;
+        grid-template-columns: 28px minmax(0, 1fr) 44px 44px;
+        align-items: center;
+        min-height: 38px;
+        padding-inline: 8px;
+        border-radius: 4px;
+        &:hover { background-color: var(--bs-tertiary-bg, #f3f4f6); }
+        .form-check-input { justify-self: center; }
+        button { min-height: 28px; }
+        > * { transition: transform 140ms ease, opacity 140ms ease; }
+        &.cwc_drag_source > * { opacity: .4; }
+        &.cwc_group_boundary { border-top: 1px solid var(--bs-border-color, #dee2e6); }
+        &.cwc_drop_before > * { transform: translateY(3px); }
+        &.cwc_drop_after > * { transform: translateY(-3px); }
+        &.cwc_drop_before::after,
+        &.cwc_drop_after::after {
+            content: "";
+            position: absolute;
+            inset-inline: 4px;
+            height: 3px;
+            border-radius: 2px;
+            background: var(--bs-primary, #017e84);
+            box-shadow: 0 0 0 1px rgba(var(--bs-primary-rgb), .15);
+            pointer-events: none;
+            z-index: 1;
+            animation: cwc-drop-line-in 120ms ease-out;
+        }
+        &.cwc_drop_before::after { top: -1px; }
+        &.cwc_drop_after::after { bottom: -1px; }
+    }
+    .cwc_column_grip {
+        cursor: grab;
+        color: var(--bs-secondary-color, #6c757d);
+        &:active { cursor: grabbing; }
+        &:disabled { cursor: default; opacity: .35; }
+    }
+    .cwc_freeze_column {
+        &[aria-pressed="false"] i { transform: rotate(45deg); opacity: .5; }
+        &[aria-pressed="true"] { background-color: rgba(var(--bs-primary-rgb), .1); }
+    }
+}
+@keyframes cwc-drop-line-in {
+    from { opacity: 0; transform: scaleX(.85); }
+    to { opacity: 1; transform: scaleX(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .cwc_column_settings .cwc_settings_row {
+        > * { transition: none; }
+        &::after { animation: none; }
+    }
+}
+@media screen {
+    .o_list_renderer .o_list_table {
+        &.cwc_has_frozen > thead { z-index: 3; }
+        > thead > tr > .cwc_frozen_cell,
+        > tbody > tr > .cwc_frozen_cell,
+        > tfoot > tr > .cwc_frozen_cell {
+            // Native sortable headers have Bootstrap's position-relative !important utility.
+            position: sticky !important;
+            inset-inline-start: var(--cwc-frozen-offset);
+            z-index: 1;
+            background-color: var(--table-bg);
+        }
+        > thead > tr > .cwc_frozen_cell {
+            z-index: 2;
+            background-color: var(--ListRenderer-thead-bg-color);
+            &.table-active { background-color: var(--ListRenderer-thead-bg-active-color); }
+        }
+        > tfoot > tr > .cwc_frozen_cell {
+            background-color: var(--ListRenderer-tfoot-bg-color);
+        }
+        .cwc_frozen_edge {
+            border-inline-end: 2px solid var(--ListRenderer-thead-border-end-color);
+        }
+    }
+    .cwc_sticky_end .o_list_renderer .o_list_table {
+        > thead > tr > .cwc_sticky_end_cell,
+        > tbody > tr > .cwc_sticky_end_cell,
+        > tfoot > tr > .cwc_sticky_end_cell {
+            position: sticky !important;
+            inset-inline-end: var(--cwc-sticky-end-offset);
+            z-index: 2;
+            background-color: var(--table-bg);
+        }
+        > thead > tr > .cwc_sticky_end_cell {
+            z-index: 4;
+            background-color: var(--ListRenderer-thead-bg-color);
+        }
+        > tfoot > tr > .cwc_sticky_end_cell {
+            background-color: var(--ListRenderer-tfoot-bg-color);
+        }
+        .cwc_sticky_end_edge {
+            border-inline-start: 2px solid var(--ListRenderer-thead-border-end-color);
+        }
+    }
+}

@@ -1,0 +1,1055 @@
+$showroom-sidebar-width: 216px;
+$showroom-sidebar-collapsed-width: 68px;
+$showroom-navbar-height: 64px;
+$showroom-brand: #1677ff;
+$showroom-sidebar: #ffffff;
+$showroom-sidebar-hover: #edf4f6;
+$showroom-navigation-accent: #078da3;
+$showroom-navigation-text: #35445c;
+$showroom-surface: #ffffff;
+$showroom-page: #f8f9fa;
+$showroom-border: #e7eaee;
+$showroom-text: #20242a;
+$showroom-muted: #667085;
+$showroom-success: #178a50;
+$showroom-warning: #9a6700;
+$showroom-danger: #c43d3d;
+
+.o-settings-form-view .app_settings_block[data-key="general_settings"] #about {
+    display: none !important;
+}
+
+.o_web_client {
+    --o-navbar-height: #{$showroom-navbar-height};
+
+    display: grid !important;
+    grid-template-areas:
+        "banner banner"
+        "navbar navbar"
+        "sidebar content"
+        "components components";
+    grid-template-columns: $showroom-sidebar-width minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+    transition: grid-template-columns 180ms ease;
+    background: $showroom-page;
+    color: $showroom-text;
+    font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+
+    > div:has(#oe_neutralize_banner) {
+        grid-area: banner;
+    }
+
+    > .o_navbar {
+        grid-area: navbar;
+        z-index: 1020;
+    }
+
+    > .o_showroom_sidebar {
+        grid-area: sidebar;
+        min-height: 0;
+    }
+
+    // Replace MuK's sidebar cleanly when it was installed before this theme.
+    > .mk_apps_sidebar_panel {
+        display: none !important;
+    }
+
+    > .o_action_manager {
+        grid-area: content;
+        min-width: 0;
+    }
+
+    > .o-main-components-container {
+        grid-area: components;
+    }
+
+    > iframe {
+        grid-column: 1 / -1;
+        width: 100%;
+    }
+
+    &:has(> .o_showroom_sidebar.is-collapsed) {
+        grid-template-columns: $showroom-sidebar-collapsed-width minmax(0, 1fr);
+
+        > .o_navbar .o_showroom_brand {
+            flex-basis: $showroom-sidebar-collapsed-width;
+            justify-content: center;
+            padding-inline: 0;
+        }
+
+        > .o_navbar .o_showroom_brand_logo {
+            margin-right: 0;
+        }
+
+        > .o_navbar .o_showroom_brand_copy {
+            display: none;
+        }
+    }
+}
+
+.o_main_navbar {
+    // Navbar entries read this locally; the core navbar overrides inheritance.
+    --o-navbar-height: #{$showroom-navbar-height};
+
+    height: $showroom-navbar-height;
+    min-height: $showroom-navbar-height;
+    padding: 0;
+    --NavBar-brand-color: #{$showroom-navigation-text};
+    --NavBar-entry-color: #{$showroom-navigation-text};
+
+    color: $showroom-navigation-text;
+    background: $showroom-sidebar;
+    border-bottom: 1px solid $showroom-border;
+    box-shadow: 0 1px 4px rgba(30, 50, 70, 0.05);
+
+    .o_showroom_brand {
+        display: flex;
+        flex: 0 0 $showroom-sidebar-width;
+        align-items: center;
+        min-width: 0;
+        height: $showroom-navbar-height;
+        padding: 0 20px;
+        color: $showroom-navigation-text;
+        background: transparent;
+        user-select: none;
+        transition: flex-basis 180ms ease, padding 180ms ease;
+    }
+
+    .o_showroom_brand_logo {
+        display: grid;
+        flex: 0 0 36px;
+        width: 36px;
+        height: 36px;
+        margin-right: 10px;
+        overflow: hidden;
+        place-items: center;
+        background: #fff;
+        border-radius: 4px;
+
+        img {
+            max-width: 30px;
+            max-height: 30px;
+            object-fit: contain;
+        }
+    }
+
+    .o_showroom_brand_copy {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        line-height: 1.25;
+
+        strong,
+        small {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        strong {
+            font-size: 15px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+        }
+
+        small {
+            margin-top: 2px;
+            color: $showroom-muted;
+            font-size: 10px;
+            letter-spacing: 0.12em;
+        }
+    }
+
+    .o_menu_brand {
+        padding-inline: 20px 12px;
+        color: $showroom-navigation-text;
+        font-size: 15px;
+        font-weight: 600;
+    }
+
+    .o_nav_entry,
+    .dropdown-toggle:not(.o-dropdown-toggle-custo) {
+        color: $showroom-navigation-text;
+    }
+
+    .o_menu_sections {
+        --NavBar-entry-backgroundColor: #{$showroom-sidebar};
+        --NavBar-entry-backgroundColor--hover: #{$showroom-sidebar-hover};
+        --NavBar-entry-backgroundColor--focus: #{$showroom-sidebar-hover};
+        --NavBar-entry-backgroundColor--active: transparent;
+        --NavBar-entry-borderColor-active: #{$showroom-navigation-accent};
+        --NavBar-entry-color--active: #{$showroom-navigation-accent};
+
+        background: $showroom-sidebar;
+
+        .o_nav_entry,
+        .dropdown-toggle {
+            color: $showroom-navigation-text;
+
+            &:hover,
+            &:focus-visible {
+                color: $showroom-navigation-accent;
+            }
+        }
+
+        .dropdown.show.dropdown-toggle {
+            color: $showroom-navigation-accent;
+            border-color: transparent transparent $showroom-navigation-accent;
+        }
+    }
+
+    .o_showroom_settings_button {
+        display: inline-flex;
+        align-items: center;
+        align-self: center;
+        justify-content: center;
+        color: $showroom-navigation-text;
+        background: transparent;
+        border: 1px solid transparent;
+
+        &:hover {
+            color: $showroom-navigation-accent;
+            background: $showroom-sidebar-hover;
+        }
+
+        &:focus-visible {
+            outline: 2px solid rgba($showroom-brand, 0.45);
+            outline-offset: 1px;
+        }
+    }
+
+    .o_menu_systray {
+        margin-left: auto !important;
+    }
+
+    .o_showroom_settings_menu {
+        display: flex;
+        flex: 0 0 44px;
+        align-items: center;
+        justify-content: center;
+        border-left: 1px solid $showroom-border;
+    }
+
+}
+
+.o_showroom_sidebar {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    color: $showroom-navigation-text;
+    background: $showroom-sidebar;
+    border-right: 1px solid $showroom-border;
+
+    .o_showroom_sidebar_header {
+        display: flex;
+        flex: 0 0 52px;
+        align-items: center;
+        min-width: 0;
+    }
+
+    .o_showroom_sidebar_toggle {
+        display: grid;
+        margin: 0 12px 0 auto;
+        place-items: center;
+        color: $showroom-muted;
+        background: transparent;
+        border: 0;
+        transition: color 160ms ease, background-color 160ms ease, transform 160ms ease;
+
+        &:hover {
+            color: $showroom-navigation-accent;
+            background: $showroom-sidebar-hover;
+        }
+
+        &:focus-visible {
+            outline: 3px solid rgba($showroom-brand, 0.28);
+            outline-offset: 2px;
+        }
+    }
+
+    .o_showroom_sidebar_title {
+        min-width: 0;
+        padding-left: 20px;
+        color: $showroom-muted;
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.16em;
+    }
+
+    .o_showroom_app_navigation {
+        flex: 1 1 auto;
+        min-height: 0;
+        padding: 4px 8px 20px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #ccd5dc transparent;
+    }
+
+    .o_showroom_app_row {
+        position: relative;
+        display: flex;
+        align-items: center;
+        height: 44px;
+        width: 100%;
+        margin: 3px 0;
+        background: transparent;
+        border-radius: 8px;
+        transition: background-color 120ms ease;
+
+        &:hover,
+        &.is-active,
+        &.is-open {
+            background: $showroom-sidebar-hover;
+        }
+
+        &.is-active,
+        &.is-open {
+            .o_showroom_app_item {
+                color: $showroom-navigation-accent;
+                font-weight: 600;
+            }
+        }
+    }
+
+    .o_showroom_app_item {
+        display: flex;
+        flex: 1 1 auto;
+        align-items: center;
+        min-width: 0;
+        height: 100%;
+        padding: 0 12px;
+        color: $showroom-navigation-text;
+        text-align: left;
+        text-decoration: none;
+        transition: color 120ms ease;
+
+        &:focus-visible {
+            outline: 2px solid $showroom-navigation-accent;
+            outline-offset: -2px;
+        }
+
+        &:hover {
+            color: $showroom-navigation-accent;
+        }
+    }
+
+    .o_showroom_app_more {
+        flex: 0 0 30px;
+        height: 30px;
+        margin-right: 6px;
+        padding: 0;
+        color: $showroom-muted;
+        background: transparent;
+        border: 0;
+        border-radius: 6px;
+
+        &:hover,
+        &[aria-expanded="true"] {
+            color: #fff;
+            background: $showroom-navigation-accent;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $showroom-navigation-accent;
+            outline-offset: 2px;
+        }
+    }
+
+    .o_showroom_app_icon {
+        display: inline-grid;
+        flex: 0 0 24px;
+        width: 24px;
+        height: 24px;
+        margin-right: 9px;
+        place-items: center;
+
+        img {
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+    }
+
+    .o_showroom_app_name {
+        overflow: hidden;
+        font-size: 14px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .o_showroom_app_submenu {
+        position: absolute;
+        z-index: 1040;
+        top: 8px;
+        left: calc(100% + 12px);
+        width: 234px;
+        max-width: calc(100vw - #{$showroom-sidebar-width} - 32px);
+        max-height: calc(100vh - #{$showroom-navbar-height} - 24px);
+        padding: 16px;
+        color: $showroom-navigation-text;
+        background: #fff;
+        border: 1px solid #dbe3ec;
+        border-radius: 12px;
+        box-shadow: 0 16px 32px rgba(25, 44, 66, 0.17);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transform: translateY(5px);
+        transition: opacity 160ms ease, transform 160ms ease;
+
+        &.is-ready {
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+            transform: translateY(0);
+            transition: opacity 160ms ease, transform 160ms ease, top 180ms ease;
+        }
+
+        &.is-two-column {
+            width: 446px;
+        }
+    }
+
+    .o_showroom_app_submenu_grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .o_showroom_app_submenu.is-two-column .o_showroom_app_submenu_grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .o_showroom_menu_column {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .o_showroom_menu_card {
+        width: 200px;
+        min-width: 0;
+        padding: 14px 16px;
+        background: #fafbfd;
+        border: 1px solid #e1e8f0;
+        border-radius: 8px;
+    }
+
+    .o_showroom_menu_card details {
+        interpolate-size: allow-keywords;
+
+        &::details-content {
+            block-size: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: block-size 180ms ease, opacity 140ms ease,
+                content-visibility 180ms allow-discrete;
+        }
+
+        &[open]::details-content {
+            block-size: auto;
+            opacity: 1;
+        }
+    }
+
+    .o_showroom_menu_card_title {
+        color: $showroom-navigation-accent;
+        font-size: 14px;
+        font-weight: 600;
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+    }
+
+    summary.o_showroom_menu_card_title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        list-style: none;
+
+        &::-webkit-details-marker {
+            display: none;
+        }
+    }
+
+    .o_showroom_menu_collapse_icon {
+        display: grid;
+        flex: 0 0 18px;
+        width: 18px;
+        height: 18px;
+        place-items: center;
+        color: $showroom-muted;
+        border: 1.5px solid currentColor;
+        border-radius: 50%;
+
+        &::before {
+            content: "−";
+            line-height: 1;
+        }
+    }
+
+    details:not([open]) .o_showroom_menu_collapse_icon::before {
+        content: "+";
+    }
+
+    .o_showroom_menu_list {
+        margin: 10px 0 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .o_showroom_menu_group_title {
+        display: block;
+        margin-top: 10px;
+        color: $showroom-muted;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .o_showroom_menu_group .o_showroom_menu_list {
+        margin-top: 4px;
+    }
+
+    .o_showroom_menu_leaf a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-height: 34px;
+        padding: 4px 6px;
+        color: $showroom-navigation-text;
+        border-radius: 5px;
+        text-decoration: none;
+
+        &:hover,
+        &:focus-visible {
+            color: $showroom-navigation-accent;
+            background: $showroom-sidebar-hover;
+        }
+    }
+
+    .o_showroom_menu_bullet {
+        flex: 0 0 6px;
+        width: 6px;
+        height: 6px;
+        background: #cf928c;
+        border-radius: 50%;
+    }
+
+    .o_showroom_sidebar_footer {
+        display: flex;
+        flex: 0 0 46px;
+        align-items: center;
+        padding: 0 20px;
+        color: $showroom-muted;
+        border-top: 1px solid $showroom-border;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+    }
+
+    .o_showroom_status_dot {
+        width: 6px;
+        height: 6px;
+        margin-right: 8px;
+        background: #52c41a;
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px rgba(82, 196, 26, 0.14);
+    }
+
+    &.is-collapsed {
+        .o_showroom_sidebar_header {
+            justify-content: center;
+        }
+
+        .o_showroom_sidebar_toggle {
+            margin-inline: 0;
+        }
+
+        .o_showroom_sidebar_title,
+        .o_showroom_app_name,
+        .o_showroom_sidebar_footer_text {
+            display: none;
+        }
+
+        .o_showroom_app_navigation {
+            padding-inline: 8px;
+        }
+
+        .o_showroom_app_item {
+            justify-content: center;
+            padding-inline: 0;
+        }
+
+        .o_showroom_app_more {
+            display: none;
+        }
+
+        .o_showroom_app_icon {
+            margin-right: 0;
+        }
+
+        .o_showroom_sidebar_footer {
+            justify-content: center;
+            padding-inline: 0;
+        }
+
+        .o_showroom_status_dot {
+            margin-right: 0;
+        }
+    }
+}
+
+// Standard components retain colors only; navigation and table styles stay intact.
+// Preserve the existing white-label behavior.
+.o_sale_action_preview,
+.o_nocontent_help a[href^="https://www.odoo.com/"][href$="/sample_quotation.pdf"] {
+    display: none !important;
+}
+
+
+.o_action_manager,
+.o_action {
+    background: $showroom-page;
+}
+
+.o_control_panel {
+    background: $showroom-surface;
+
+    .breadcrumb-item {
+        color: $showroom-muted;
+    }
+
+    .o_last_breadcrumb_item {
+        color: $showroom-text;
+    }
+}
+
+.btn-primary {
+    --btn-bg: #{$showroom-brand};
+    --btn-border-color: #{$showroom-brand};
+    --btn-hover-bg: #0f68ef;
+    --btn-hover-border-color: #0f68ef;
+    --btn-active-bg: #0a5fdc;
+    --btn-active-border-color: #0a5fdc;
+
+    color: #fff;
+    background: $showroom-brand;
+    border-color: $showroom-brand;
+
+    &:hover,
+    &:focus {
+        color: #fff;
+        background: #0f68ef;
+        border-color: #0f68ef;
+    }
+
+    &:active,
+    &.active {
+        color: #fff;
+        background: #0a5fdc;
+        border-color: #0a5fdc;
+    }
+}
+
+.btn-secondary {
+    color: #344054;
+    background: $showroom-surface;
+    border-color: #d0d5dd;
+
+    &:hover,
+    &:focus {
+        color: $showroom-brand;
+        background: #f5f9ff;
+        border-color: #9fc4fb;
+    }
+
+    &:active,
+    &.active {
+        color: #0958d9;
+        background: #d5ebfb;
+        border-color: $showroom-brand;
+    }
+}
+
+.btn-outline-primary {
+    color: $showroom-brand;
+    background: $showroom-surface;
+    border-color: $showroom-brand;
+
+    &:hover,
+    &:focus,
+    &:active,
+    &.active {
+        color: #0958d9;
+        background: #eef5ff;
+        border-color: #0958d9;
+    }
+}
+
+.btn-danger {
+    color: #fff;
+    background: $showroom-danger;
+    border-color: $showroom-danger;
+
+    &:hover,
+    &:focus {
+        color: #fff;
+        background: #a93838;
+        border-color: #a93838;
+    }
+
+    &:active,
+    &.active {
+        color: #fff;
+        background: #8f2f2f;
+        border-color: #8f2f2f;
+    }
+}
+
+.btn-light {
+    color: #475467;
+    background: transparent;
+    border-color: transparent;
+
+    &:hover,
+    &:focus {
+        color: $showroom-brand;
+        background: #eef5ff;
+        border-color: transparent;
+    }
+}
+
+.modal {
+    :where(input, select).o_input,
+    .form-control,
+    .form-select,
+    .o_select_menu .form-select {
+        color: #344054;
+        background-color: $showroom-surface;
+        border-color: #d0d5dd;
+
+        &:hover:not(:focus):not(:focus-visible):not(:disabled):not([readonly]) {
+            border-color: #98a2b3;
+        }
+
+        &:focus,
+        &:focus-visible {
+            border-color: $showroom-brand;
+        }
+
+        &:disabled,
+        &[readonly] {
+            color: #98a2b3;
+            background-color: #f2f4f7;
+            border-color: #e4e7ec;
+        }
+    }
+
+    .o_field_invalid {
+        :where(input, select, textarea).o_input,
+        .form-control,
+        .form-select {
+            color: #8f2f2f;
+            background-color: #fffafa;
+            border-color: $showroom-danger;
+
+        }
+    }
+}
+
+.form-check-input {
+    border-color: #b8c0cc;
+
+    &:focus {
+        border-color: $showroom-brand;
+    }
+
+    &:checked {
+        background-color: $showroom-brand;
+        border-color: $showroom-brand;
+    }
+}
+
+.o_list_view {
+    > .o_content {
+        padding: 0;
+        background: $showroom-page;
+    }
+
+    .o_list_renderer {
+        height: 100%;
+        overflow: auto;
+        background: $showroom-surface;
+        border: 1px solid $showroom-border;
+        border-radius: 0;
+        box-shadow: 0 2px 8px rgba(0, 21, 42, 0.04);
+    }
+}
+
+.o_list_renderer {
+    --ListRenderer-thead-bg-color: #d5ebfb;
+    --ListRenderer-thead-padding-y: 10px;
+
+    // Odoo writes a calculated pixel width on list tables. Sparse custom lists
+    // can therefore stop before the right edge of the content area. Keep that
+    // width when it is wider (horizontal scrolling), but fill the renderer when
+    // the calculated width is smaller than the available space.
+    > .o_list_table {
+        min-width: 100%;
+    }
+
+    .o_list_table {
+        color: #344054;
+        font-size: 14px;
+
+        thead th {
+            color: #344054;
+            border-bottom-color: #c7dff2;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+        }
+
+        tbody > tr {
+            background: $showroom-surface;
+            border-bottom-color: #edf0f3;
+
+            &:hover,
+            &.table-info {
+                --table-bg-state: #eef5ff;
+            }
+
+            > td {
+                vertical-align: middle;
+            }
+        }
+
+        tfoot {
+            color: $showroom-muted;
+            background: #fbfcfd;
+        }
+    }
+}
+
+.o_kanban_view {
+    background: $showroom-page;
+
+    .o_kanban_record,
+    .o_kanban_quick_create {
+        border-color: $showroom-border;
+        background: $showroom-surface;
+
+        &:hover {
+            border-color: #b9d5fa;
+        }
+    }
+}
+
+.o_form_view {
+    .o_form_sheet_bg {
+        background: $showroom-page;
+    }
+
+    .o_form_sheet {
+        border-color: $showroom-border;
+    }
+
+    .oe_title h1,
+    .oe_title .h1 {
+        color: $showroom-text;
+    }
+
+    .o_inner_group > tbody > tr > td.o_td_label,
+    .o_group .o_form_label {
+        color: #344054;
+    }
+
+    .o_group_name {
+        color: $showroom-text;
+    }
+
+    .o_form_statusbar {
+        background: $showroom-surface;
+        border-bottom-color: $showroom-border;
+    }
+}
+
+.o_notebook {
+    --Notebook__link-border-color--active: transparent;
+    --Notebook__link-border-top-color--active: transparent;
+    --Notebook__link-border-color--hover: transparent;
+
+    .o_notebook_headers {
+        border-bottom-color: $showroom-border;
+    }
+
+    .nav-link {
+        color: $showroom-muted;
+
+        &:hover,
+        &:focus {
+            color: $showroom-brand;
+        }
+
+        &.active,
+        &.active:hover,
+        &.active:focus {
+            color: $showroom-brand;
+            background: transparent;
+
+        }
+    }
+}
+
+.o_pager {
+    .btn {
+        color: #475467;
+        background: $showroom-surface;
+        border-color: $showroom-border;
+
+        &:hover:not(:disabled) {
+            color: $showroom-brand;
+            background: #eef5ff;
+            border-color: #9fc4fb;
+        }
+    }
+}
+
+.alert-success {
+    color: $showroom-success;
+    background: #edf8f2;
+    border-color: #cdebd9;
+}
+
+.alert-warning {
+    color: $showroom-warning;
+    background: #fff7df;
+    border-color: #f1dfaa;
+}
+
+.alert-danger {
+    color: $showroom-danger;
+    background: #fdf0f0;
+    border-color: #f3cccc;
+}
+
+.text-bg-success,
+.badge.bg-success {
+    color: #fff !important;
+    background-color: $showroom-success !important;
+}
+
+.text-bg-warning,
+.badge.bg-warning {
+    color: #fff !important;
+    background-color: $showroom-warning !important;
+}
+
+.text-bg-danger,
+.badge.bg-danger {
+    color: #fff !important;
+    background-color: $showroom-danger !important;
+}
+
+.o_status.o_status_green {
+    background-color: $showroom-success;
+}
+
+.o_status.o_status_red {
+    background-color: $showroom-danger;
+}
+
+.dropdown-menu {
+    border-color: $showroom-border;
+}
+
+.modal-content {
+    border-color: $showroom-border;
+}
+
+.modal-header,
+.modal-footer {
+    border-color: $showroom-border;
+}
+
+.modal-title {
+    color: $showroom-text;
+}
+
+.popover,
+.o_popover {
+    border-color: $showroom-border;
+}
+
+.popover-header {
+    color: $showroom-text;
+    background: $showroom-surface;
+    border-color: $showroom-border;
+}
+
+.popover-body {
+    color: #475467;
+}
+
+.offcanvas {
+    border-color: $showroom-border;
+
+    .offcanvas-header {
+        border-bottom-color: $showroom-border;
+    }
+}
+
+// Keep this aligned with the framework's `isSmall` breakpoint so the sidebar is only
+// removed after the native compact app switcher becomes available.
+@media (max-width: 767.98px) {
+    .o_web_client,
+    .o_web_client:has(> .o_showroom_sidebar.is-collapsed) {
+        grid-template-areas:
+            "banner"
+            "navbar"
+            "content"
+            "components";
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .o_showroom_sidebar {
+        display: none;
+    }
+
+    .o_main_navbar {
+        .o_showroom_brand {
+            flex-basis: auto;
+            max-width: 220px;
+        }
+
+        .o_showroom_brand_copy small {
+            display: none;
+        }
+    }
+}
+
+@media print {
+    .o_web_client {
+        display: block !important;
+    }
+
+    .o_showroom_sidebar {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .o_showroom_sidebar .o_showroom_app_item {
+        transition: none;
+    }
+
+    .o_showroom_sidebar .o_showroom_app_submenu,
+    .o_showroom_sidebar .o_showroom_menu_card details::details-content {
+        transition: none;
+    }
+}

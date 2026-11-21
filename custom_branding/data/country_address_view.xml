@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- 中国地址表单：联系人及地址页签按中国顺序展示地址字段 -->
+        <record id="base.cn" model="res.country">
+            <field name="address_view_id" ref="view_partner_address_form_cn_global"/>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,36 @@
+// Bootstrap's derived semantic maps contain only its built-in statuses.
+// Extend them before components and utilities consume those maps.
+$exceed-text-emphasis: shade-color($exceed, 60%) !default;
+$exceed-bg-subtle: tint-color($exceed, 80%) !default;
+$exceed-border-subtle: tint-color($exceed, 60%) !default;
+
+$theme-colors-text: map-merge($theme-colors-text, ("exceed": $exceed-text-emphasis));
+$theme-colors-bg-subtle: map-merge($theme-colors-bg-subtle, ("exceed": $exceed-bg-subtle));
+$theme-colors-border-subtle: map-merge($theme-colors-border-subtle, ("exceed": $exceed-border-subtle));
+
+@if $enable-dark-mode {
+    $exceed-text-emphasis-dark: tint-color($exceed, 40%) !default;
+    $exceed-bg-subtle-dark: shade-color($exceed, 80%) !default;
+    $exceed-border-subtle-dark: shade-color($exceed, 40%) !default;
+
+    $theme-colors-text-dark: map-merge($theme-colors-text-dark, ("exceed": $exceed-text-emphasis-dark));
+    $theme-colors-bg-subtle-dark: map-merge($theme-colors-bg-subtle-dark, ("exceed": $exceed-bg-subtle-dark));
+    $theme-colors-border-subtle-dark: map-merge($theme-colors-border-subtle-dark, ("exceed": $exceed-border-subtle-dark));
+}
+
+$utilities-text-emphasis-colors: map-merge(
+    $utilities-text-emphasis-colors,
+    ("exceed-emphasis": var(--#{$prefix}exceed-text-emphasis)),
+);
+$utilities-bg-subtle: map-merge(
+    $utilities-bg-subtle,
+    ("exceed-subtle": var(--#{$prefix}exceed-bg-subtle)),
+);
+$utilities-border-subtle: map-merge(
+    $utilities-border-subtle,
+    ("exceed-subtle": var(--#{$prefix}exceed-border-subtle)),
+);
+$table-variants: map-merge(
+    $table-variants,
+    ("exceed": shift-color($exceed, $table-bg-scale)),
+);

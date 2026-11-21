@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_web_components.DashboardControlPanel">
+        <WithSearch t-if="props.search" resModel="props.model" searchViewArch="arch" searchViewFields="fields"
+                    SearchModel="SearchModel" context="context" irFilters="irFilters"
+                    globalState="props.actionState" searchMenuTypes="['filter', 'favorite']">
+            <DashboardLayout model="props.model" onSearch="props.onSearch" hideSearchBar="props.hideSearchBar" slots="props.slots"/>
+        </WithSearch>
+        <DashboardLayout t-else="" model="props.model" slots="props.slots"/>
+    </t>
+
+    <t t-name="custom_web_components.DashboardLayout">
+        <div class="d-flex flex-column h-100 overflow-hidden">
+            <Layout display="{ controlPanel: { layoutActions: true } }" className="'flex-grow-1 h-0 overflow-hidden'">
+                <t t-set-slot="control-panel-create-button"><t t-slot="primary"/></t>
+                <t t-set-slot="control-panel-additional-actions"><CogMenu resModel="props.model"/></t>
+                <t t-set-slot="layout-actions"><SearchBar t-if="env.searchModel and !props.hideSearchBar"/></t>
+                <t t-set-slot="control-panel-navigation-additional"><t t-slot="navigation"/></t>
+                <t t-slot="default"/>
+            </Layout>
+        </div>
+    </t>
+</templates>

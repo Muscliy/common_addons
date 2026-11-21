@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t
+        t-name="showroom_backend_theme.WebClient"
+        t-inherit="web.WebClient"
+        t-inherit-mode="extension"
+    >
+        <xpath expr="//NavBar" position="after">
+            <ShowroomSidebar/>
+        </xpath>
+    </t>
+
+    <t t-name="showroom_backend_theme.ShowroomSidebar">
+        <aside
+            t-ref="sidebar"
+            t-att-class="{
+                'o_showroom_sidebar': true,
+                'is-collapsed': state.isCollapsed,
+            }"
+            aria-label="业务导航"
+        >
+            <div class="o_showroom_sidebar_tabs" role="tablist" aria-label="导航分类">
+                <button t-foreach="tabs" t-as="tab" t-key="tab.id" type="button"
+                    role="tab" t-att-id="'showroom-tab-' + tab.id"
+                    t-att-aria-controls="'showroom-panel-' + tab.id"
+                    t-att-aria-selected="state.activeTab === tab.id ? 'true' : 'false'"
+                    t-att-title="tab.name" t-att-aria-label="tab.name"
+                    t-att-class="{ 'is-active': state.activeTab === tab.id }"
+                    t-on-click="() => this.selectTab(tab.id)">
+                    <i t-att-class="'fa ' + tab.icon" aria-hidden="true"/>
+                    <span t-esc="tab.name"/>
+                </button>
+            </div>
+            <div class="o_showroom_sidebar_header">
+                <div class="o_showroom_sidebar_title" t-esc="tabs.find(tab => tab.id === state.activeTab).name"/>
+                <button
+                    type="button"
+                    class="o_showroom_sidebar_toggle btn btn-link"
+                    t-att-title="state.isCollapsed ? '展开菜单' : '收起菜单'"
+                    t-att-aria-label="state.isCollapsed ? '展开左侧菜单' : '收起左侧菜单'"
+                    t-att-aria-expanded="state.isCollapsed ? 'false' : 'true'"
+                    t-on-click="toggleSidebar"
+                >
+                    <i
+                        class="oi oi-fw oi-panel-right fa-flip-horizontal"
+                        aria-hidden="true"
+                    />
+                </button>
+            </div>
+            <nav t-if="state.activeTab === 'apps'" id="showroom-panel-apps" role="tabpanel"
+                aria-labelledby="showroom-tab-apps" class="o_showroom_app_navigation" t-on-scroll="closeAppMenu">
+                <div
+                    t-foreach="apps"
+                    t-as="app"
+                    t-key="app.id"
+                    t-att-data-menu-xmlid="app.xmlid"
+                    t-att-class="{
+                        'o_showroom_app_row': true,
+                        'is-active': currentApp?.id === app.id,
+                        'is-open': state.openAppId === app.id,
+                    }"
+                >
+                    <a
+                        class="o_showroom_app_item"
+                        t-att-href="getAppHref(app)"
+                        t-att-title="app.name"
+                        t-on-click.prevent="() => this.selectApp(app)"
+                    >
+                        <span class="o_showroom_app_icon" aria-hidden="true">
+                            <img t-att-src="getAppIcon(app)" alt=""/>
+                        </span>
+                        <span class="o_showroom_app_name" t-esc="app.name"/>
+                    </a>
+                    <button
+                        t-if="hasSections(app)"
+                        type="button"
+                        class="o_showroom_app_more"
+                        t-att-title="app.name + '子菜单'"
+                        t-att-aria-label="app.name + '子菜单'"
+                        t-att-aria-expanded="state.openAppId === app.id ? 'true' : 'false'"
+                        t-att-aria-controls="'o_showroom_app_submenu_' + app.id"
+                        t-on-click="() => this.toggleAppMenu(app)"
+                    >
+                        <i class="fa fa-ellipsis-h" aria-hidden="true"/>
+                    </button>
+                </div>
+            </nav>
+            <nav t-else="" t-att-id="'showroom-panel-' + state.activeTab" role="tabpanel"
+                t-att-aria-labelledby="'showroom-tab-' + state.activeTab" class="o_showroom_entry_navigation">
+                <p t-if="!entryState[state.activeTab].length" class="o_showroom_entries_empty"
+                    t-esc="state.activeTab === 'bookmarks' ? '暂无书签' : '暂无记录'"/>
+                <div t-foreach="entryState[state.activeTab]" t-as="entry" t-key="entry.url"
+                    class="o_showroom_entry_row">
+                    <a t-att-href="entry.url" t-att-title="entry.name" class="o_showroom_entry_link">
+                        <i class="fa fa-list-alt" aria-hidden="true"/>
+                        <span t-esc="entry.name"/>
+                    </a>
+                    <Dropdown>
+                        <button type="button" class="o_showroom_entry_more btn"
+                            t-att-aria-label="entry.name + '更多操作'" title="更多操作">
+                            <i class="fa fa-ellipsis-h" aria-hidden="true"/>
+                        </button>
+                        <t t-set-slot="content">
+                            <DropdownItem class="'text-danger o_showroom_entry_delete'"
+                                onSelected="() => this.entries.remove(this.state.activeTab, entry.url)">
+                                <i class="fa fa-trash-o me-2" aria-hidden="true"/>删除
+                            </DropdownItem>
+                        </t>
+                    </Dropdown>
+                </div>
+            </nav>
+            <div
+                t-if="openApp"
+                t-att-id="'o_showroom_app_submenu_' + openApp.id"
+                t-att-style="'top: ' + state.menuTop + 'px'"
+                t-att-class="{
+                    'o_showroom_app_submenu': true,
+                    'is-two-column': menuColumns.length === 2,
+                    'is-ready': state.menuReady,
+                }"
+                t-att-aria-label="openApp.name + '子菜单'"
+            >
+                <div class="o_showroom_app_submenu_grid">
+                    <div t-foreach="menuColumns" t-as="column" t-key="column_index" class="o_showroom_menu_column">
+                        <section t-foreach="column" t-as="section" t-key="section.id" class="o_showroom_menu_card">
+                            <details
+                                t-if="section.childrenTree.length"
+                                t-att-open="state.collapsedSectionIds.includes(section.id) ? undefined : 'open'"
+                                t-on-toggle="(event) => this.onSectionToggle(section, event)"
+                            >
+                                <summary class="o_showroom_menu_card_title">
+                                    <a
+                                        t-if="section.actionID"
+                                        t-att-href="getAppHref(section)"
+                                        t-on-click.stop.prevent="() => this.selectMenu(section)"
+                                        t-esc="section.name"
+                                    />
+                                    <span t-else="" t-esc="section.name"/>
+                                    <span class="o_showroom_menu_collapse_icon" aria-hidden="true"/>
+                                </summary>
+                                <ul class="o_showroom_menu_list">
+                                    <t t-foreach="section.childrenTree" t-as="menu" t-key="menu.id">
+                                        <t t-call="showroom_backend_theme.SidebarMenuNode"/>
+                                    </t>
+                                </ul>
+                            </details>
+                            <div t-else="" class="o_showroom_menu_card_title">
+                                <a
+                                    t-if="section.actionID"
+                                    t-att-href="getAppHref(section)"
+                                    t-on-click.prevent="() => this.selectMenu(section)"
+                                    t-esc="section.name"
+                                />
+                                <span t-else="" t-esc="section.name"/>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+            <div class="o_showroom_sidebar_footer">
+                <span class="o_showroom_status_dot" aria-hidden="true"/>
+                <span class="o_showroom_sidebar_footer_text">智能制造平台</span>
+            </div>
+        </aside>
+    </t>
+
+    <t t-name="showroom_backend_theme.SidebarMenuNode">
+        <li t-if="menu.childrenTree.length" class="o_showroom_menu_group">
+            <span class="o_showroom_menu_group_title" t-esc="menu.name"/>
+            <ul class="o_showroom_menu_list">
+                <t t-foreach="menu.childrenTree" t-as="menu" t-key="menu.id">
+                    <t t-call="showroom_backend_theme.SidebarMenuNode"/>
+                </t>
+            </ul>
+        </li>
+        <li t-elif="menu.actionID" class="o_showroom_menu_leaf">
+            <a
+                t-att-href="getAppHref(menu)"
+                t-att-data-menu-xmlid="menu.xmlid"
+                t-on-click.prevent="() => this.selectMenu(menu)"
+            >
+                <span class="o_showroom_menu_bullet" aria-hidden="true"/>
+                <span t-esc="menu.name"/>
+            </a>
+        </li>
+    </t>
+
+</templates>

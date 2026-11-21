@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Run on install and upgrade so copied standard calendars are localized as well. -->
+    <function model="resource.calendar.attendance" name="_localize_standard_attendance_names"/>
+</odoo>

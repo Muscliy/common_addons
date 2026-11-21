@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="showroom_backend_theme.AppIcon" t-inherit="web.ImageUrlField" t-inherit-mode="extension">
+        <xpath expr="//img" position="attributes">
+            <attribute name="t-att-src">showroomImageUrl</attribute>
+        </xpath>
+    </t>
+
+    <t
+        t-name="showroom_backend_theme.UserMenu"
+        t-inherit="web.UserMenu"
+        t-inherit-mode="extension"
+    >
+        <xpath expr="//mark" position="replace"/>
+    </t>
+
+    <t
+        t-name="showroom_backend_theme.ResConfigEdition"
+        t-inherit="res_config_edition"
+        t-inherit-mode="extension"
+    >
+        <xpath expr="//Setting" position="replace">
+            <Setting addLabel="false">
+                <div class="user-heading">
+                    <h3 class="px-0">TYJ 企业管理平台</h3>
+                </div>
+                <small class="text-muted">企业运营管理系统</small>
+            </Setting>
+        </xpath>
+    </t>
+
+    <t
+        t-name="showroom_backend_theme.UpgradeDialog"
+        t-inherit="web.UpgradeDialog"
+        t-inherit-mode="extension"
+    >
+        <xpath expr="//Dialog" position="replace">
+            <Dialog title.translate="功能暂不可用">
+                <p>当前部署未启用此功能，请联系系统管理员。</p>
+                <t t-set-slot="footer">
+                    <button class="btn btn-primary" t-on-click="this.props.close">确定</button>
+                </t>
+            </Dialog>
+        </xpath>
+    </t>
+</templates>

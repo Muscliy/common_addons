@@ -1,0 +1,44 @@
+body {
+    font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+
+.o_showroom_login_heading {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    strong {
+        color: #20242a;
+        font-size: 22px;
+        font-weight: 700;
+    }
+
+    small {
+        color: #667085;
+        font-size: 12px;
+        letter-spacing: 0.08em;
+    }
+}
+
+.o_showroom_login_footer {
+    color: #98a2b3;
+}
+
+.o_doc_link {
+    display: none !important;
+}
+
+
+.modal-dialog {
+    .o_form_view {
+        .o_form_sheet_bg {
+            background-color: white;
+        }
+    }
+
+    .modal-footer {
+        .o_form_buttons_edit {
+            justify-content: flex-end;
+        }
+    }
+}

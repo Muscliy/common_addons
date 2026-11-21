@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="base.partner_root" model="res.partner">
+        <field name="name">TYJ 助手</field>
+        <field name="email">assistant@tyj.local</field>
+        <field name="image_1920" type="base64" file="showroom_backend_theme/static/src/img/tyj-assistant.svg"/>
+    </record>
+
+    <record id="base.user_root" model="res.users">
+        <field name="email">assistant@tyj.local</field>
+        <field name="signature" type="html"><div>TYJ 助手</div></field>
+    </record>
+
+    <function model="res.partner" name="_apply_tyj_branding"/>
+
+    <function model="ir.config_parameter" name="set_param">
+        <value>web.web_app_name</value>
+        <value>TYJ 企业管理</value>
+    </function>
+</odoo>

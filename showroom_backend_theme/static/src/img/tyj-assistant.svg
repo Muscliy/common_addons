@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">TYJ Assistant</title>
+  <rect width="512" height="512" rx="112" fill="#00152A"/>
+  <path d="M108 132h296v64H290v190h-68V196H108z" fill="#fff"/>
+  <path d="M300 236h104v64h-36v22c0 42-34 76-76 76h-34v-64h30c14 0 24-10 24-24v-10h-12z" fill="#35B6B4"/>
+</svg>

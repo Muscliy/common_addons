@@ -1,0 +1,77 @@
+// Shared dashboard presentation. Business scopes and semantic statuses stay local.
+.o_cwc_dashboard,
+.o_cwc_dashboard_period_switch {
+    --dashboard-selected: #{mix($o-brand-primary, $o-main-headings-color, 80%)};
+}
+
+.o_cwc_dashboard {
+    --dashboard-accent: #{$o-brand-primary};
+    --dashboard-surface: #{$o-view-background-color};
+    --dashboard-page: #f6f8fb;
+    --dashboard-line: #dce3ec;
+    --dashboard-ink: #1f2f3d;
+    --dashboard-muted: #5e6e80;
+    --dashboard-radius: 10px;
+    --dashboard-gap: 16px;
+    --dashboard-title-size: 24px;
+    --dashboard-heading-size: 18px;
+    --dashboard-kpi-size: 28px;
+    --dashboard-control-height: 36px;
+    --dashboard-hover-line: #{rgba($o-brand-primary, .32)};
+    --dashboard-shadow: 0 4px 12px rgba(16, 24, 40, .08);
+}
+
+.o_cwc_dashboard .o_cwc_dashboard_header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 20px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--dashboard-line);
+    background: var(--dashboard-surface);
+}
+
+.o_cwc_dashboard .o_cwc_dashboard_title {
+    margin: 2px 0 0;
+    color: var(--dashboard-ink);
+    font-size: var(--dashboard-title-size);
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.o_cwc_dashboard .o_cwc_dashboard_metric {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 13px 14px 12px;
+    border: 1px solid var(--dashboard-line);
+    border-radius: var(--dashboard-radius);
+    background: var(--dashboard-surface);
+    text-align: left;
+    overflow: hidden;
+    transition: border-color 150ms, box-shadow 150ms, transform 150ms;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 3px;
+        background: var(--dashboard-metric-accent, var(--dashboard-accent));
+    }
+    &:hover:not(:disabled) {
+        border-color: var(--dashboard-hover-line);
+        box-shadow: var(--dashboard-shadow);
+        transform: translateY(-1px);
+    }
+    &:focus-visible { outline: 2px solid var(--dashboard-accent); outline-offset: 2px; }
+    &:disabled { opacity: .6; }
+}
+
+@media (max-width: 760px) {
+    .o_cwc_dashboard .o_cwc_dashboard_header { align-items: flex-start; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .o_cwc_dashboard .o_cwc_dashboard_metric { transition: none; transform: none; }
+}

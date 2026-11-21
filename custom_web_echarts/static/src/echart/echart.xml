@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_web_echarts.EChart">
+        <div class="o_custom_echart" t-att-style="chartStyle"
+             role="img" t-att-aria-label="props.ariaLabel">
+            <div class="o_custom_echart_canvas" t-ref="chart"/>
+            <div t-if="state.loadError" class="o_custom_echart_message" role="alert">
+                图表资源加载失败，请刷新后重试。
+            </div>
+            <div t-elif="!props.option" class="o_custom_echart_message">暂无图表数据</div>
+        </div>
+    </t>
+</templates>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_web_components.IndicatorProgress">
+        <div class="o_indicator_progress" t-att-class="'text-' + props.tone"
+             role="img" t-att-aria-label="props.ariaLabel">
+            <div class="o_indicator_progress_visual">
+                <div class="o_indicator_progress_track" aria-hidden="true">
+                    <span class="o_indicator_progress_fill"
+                          t-att-style="'width:' + actualWidth + '%'"/>
+                </div>
+                <i t-if="props.target !== null" class="o_indicator_progress_target"
+                   aria-hidden="true" t-att-style="'left:' + targetPosition + '%'"/>
+            </div>
+            <div t-if="props.actualText || props.targetText" class="o_indicator_progress_values">
+                <span class="o_indicator_progress_actual" t-esc="props.actualText"/>
+                <span class="o_indicator_progress_target_value" t-esc="props.targetText"/>
+            </div>
+        </div>
+    </t>
+</templates>

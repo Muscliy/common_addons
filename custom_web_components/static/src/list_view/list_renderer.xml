@@ -1,0 +1,67 @@
+<templates xml:space="preserve">
+    <t t-name="custom_web_components.ListRenderer" t-inherit="web.ListRenderer" t-inherit-mode="extension">
+        <xpath expr="//Dropdown" position="attributes">
+            <attribute name="onStateChanged">(state) => this.onColumnMenuStateChanged(state)</attribute>
+        </xpath>
+        <xpath expr="//Dropdown/button" position="attributes">
+            <attribute name="title">列设置</attribute>
+            <attribute name="aria-label">列设置</attribute>
+            <attribute name="tabindex">0</attribute>
+        </xpath>
+        <xpath expr="//t[@t-foreach='optionalFieldGroups']" position="before">
+            <t t-if="layout.loaded" t-call="custom_web_components.ColumnSettings"/>
+        </xpath>
+        <xpath expr="//t[@t-foreach='optionalFieldGroups']" position="attributes">
+            <attribute name="t-if">!layout.loaded</attribute>
+        </xpath>
+    </t>
+
+    <t t-name="custom_web_components.ColumnSettings">
+        <section class="cwc_column_settings" aria-label="列设置">
+            <div class="cwc_settings_heading px-3 py-2 small text-muted" aria-hidden="true">
+                <span>顺序 / 字段</span><span>显示</span><span>固定</span>
+            </div>
+            <div class="cwc_settings_columns px-2 py-1" t-on-dragleave="onColumnDragLeave">
+                <t t-foreach="settingsColumns" t-as="column" t-key="column.id">
+                    <div class="cwc_settings_row" t-att-data-name="column.name"
+                         t-att-class="{'cwc_drag_source': columnDrag.source === column.name,
+                             'cwc_drop_before': columnDrag.target === column.name and columnDrag.placement === 'before',
+                             'cwc_drop_after': columnDrag.target === column.name and columnDrag.placement === 'after',
+                             'cwc_group_boundary': !column_first and isColumnFrozen(settingsColumns[column_index - 1]) and !isColumnFrozen(column)}"
+                         t-on-dragover.stop="(ev) => this.onColumnDragOver(ev, column)"
+                         t-on-dragleave="onColumnDragLeave" t-on-drop.stop="(ev) => this.onColumnDrop(ev, column)">
+                        <button type="button" class="cwc_column_grip btn btn-sm p-0"
+                            t-att-draggable="canMoveColumn(column) ? 'true' : 'false'" t-att-disabled="!canMoveColumn(column)"
+                            title="拖动排序；也可按 Alt + 上下方向键" t-att-aria-label="'移动列：' + column.label"
+                            t-on-keydown="(ev) => this.onColumnMoveKey(ev, column)"
+                            t-on-dragstart.stop="(ev) => this.onColumnDragStart(ev, column)"
+                            t-on-dragend="clearColumnDrag">⠿</button>
+                        <span class="text-truncate" t-att-title="column.label || column.name" t-esc="column.label || column.name"/>
+                        <input type="checkbox" class="cwc_column_visible form-check-input m-0"
+                            t-att-checked="isColumnVisible(column)" t-att-disabled="!canToggleColumn(column)"
+                            t-att-aria-label="'显示列：' + column.label" t-att-title="columnVisibilityTitle(column)"
+                            t-on-change="() => this.toggleOptionalField(column.name)"/>
+                        <button type="button" class="cwc_freeze_column btn btn-sm p-0"
+                            t-att-class="isColumnFrozen(column) ? 'text-primary' : 'text-muted'"
+                            t-att-aria-pressed="isColumnFrozen(column) ? 'true' : 'false'"
+                            t-att-aria-label="(isColumnFrozen(column) ? '取消固定：' : '固定列：') + column.label"
+                            t-att-title="isColumnFrozen(column) ? '取消固定' : '固定在左侧'"
+                            t-att-disabled="!canMoveColumn(column) or !isColumnVisible(column)"
+                            t-on-click="() => this.toggleColumnFrozen(column)">
+                            <i class="fa fa-thumb-tack" aria-hidden="true"/>
+                        </button>
+                    </div>
+                </t>
+            </div>
+            <div class="border-top px-3 pt-2 pb-2 mt-2">
+                <div class="small text-muted mb-2" aria-live="polite"
+                     t-esc="layout.busy ? '正在保存…' : props.list.editedRecord ? '请先保存或取消当前记录的编辑' : layout.dirty ? '布局未保存' : '拖动表格列边缘可调整宽度'"/>
+                <div t-if="layout.freezeOverflow" class="small text-warning mb-2" role="status">固定列过宽，已暂时允许全部列滚动；请缩窄或取消部分固定列。</div>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-primary cwc_save_layout" t-on-click="saveLayout" t-att-disabled="!canPersonalize or !layout.dirty">保存布局</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary cwc_reset_layout" t-on-click="resetLayout" t-att-disabled="!canPersonalize">恢复默认</button>
+                </div>
+            </div>
+        </section>
+    </t>
+</templates>

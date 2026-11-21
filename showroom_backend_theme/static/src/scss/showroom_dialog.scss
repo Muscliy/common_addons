@@ -1,0 +1,11 @@
+.modal-footer {
+    justify-content: flex-end !important;
+}
+
+.modal.o_technical_modal .modal-footer {
+    footer,
+    .o_form_buttons_edit,
+    .o_form_buttons_view {
+        justify-content: flex-end;
+    }
+}
