@@ -54,6 +54,12 @@ class TestWorkflowBrowser(HttpCase):
                 };
                 await click('插入示例');
                 await wait(() => document.querySelectorAll('.react-flow__node').length === 3, 'nodes');
+                const handle = document.querySelector('[data-id="start"] .react-flow__handle.source');
+                const bounds = handle.getBoundingClientRect();
+                const hit = document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y - bounds.height / 4);
+                if (getComputedStyle(handle).width !== '14px' || hit !== handle) {
+                    throw new Error('The connection handle must accept input outside the visible dot');
+                }
                 document.querySelector('[data-id="task"]').click();
                 await wait(() => document.querySelector('#wf-node-name'), 'properties');
                 const name = document.querySelector('#wf-node-name');
