@@ -1,0 +1,40 @@
+.o_workflow_action {
+    .wf-runtime { flex: 1; min-height: 0; overflow: auto; padding: 1.5rem; }
+    .wf-runtime-columns {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+        align-items: start;
+        gap: 1rem;
+        max-width: 72rem;
+        margin: 0 auto;
+    }
+    .wf-runtime-card {
+        margin: 0 0 1rem;
+        padding: 1.25rem;
+        border: 1px solid var(--wf-border);
+        border-radius: 0.5rem;
+        background: var(--wf-surface);
+    }
+    .wf-runtime-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .wf-runtime-card .wf-task:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
+    .wf-runtime-actions { margin-top: 0.75rem; }
+    .wf-progress { list-style: none; padding: 0; margin: 0; }
+    .wf-progress li {
+        display: grid;
+        grid-template-columns: 0.625rem minmax(0, 1fr) max-content;
+        align-items: center;
+        gap: 0.625rem;
+        padding: 0.625rem 0;
+        border-bottom: 1px solid var(--wf-border);
+    }
+    .wf-progress-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--wf-muted); }
+    .wf-progress-done .wf-progress-dot { background: var(--wf-success); }
+    .wf-progress-waiting .wf-progress-dot, .wf-progress-running .wf-progress-dot { background: var(--wf-brand); }
+    .wf-progress-rejected .wf-progress-dot { background: var(--wf-danger); }
+    .wf-runtime-history { margin-top: 1rem; }
+    .wf-runtime summary { cursor: pointer; }
+    @media (max-width: 740px) {
+        .wf-runtime { padding: 0.75rem; }
+        .wf-runtime-columns { grid-template-columns: minmax(0, 1fr); gap: 0; }
+    }
+}

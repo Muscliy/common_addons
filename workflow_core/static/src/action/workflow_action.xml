@@ -16,13 +16,20 @@
                     <button t-if="state.canvas &amp;&amp; !state.canvas.instance_id" class="btn btn-secondary" t-on-click="validateClick" t-att-disabled="state.busy">校验</button>
                     <button t-if="state.canvas?.can_publish" class="btn btn-primary" t-on-click="publishClick" t-att-disabled="state.busy">发布</button>
                     <button t-if="state.canvas?.can_start" class="btn btn-primary" t-on-click="startClick" t-att-disabled="state.busy">启动流程</button>
+                    <button t-if="state.canvas?.instance_id" class="btn btn-secondary" t-on-click="toggleGraph" t-att-disabled="state.busy"
+                            t-esc="state.graphVisible ? '返回办理' : '查看流程图'"/>
+                    <button t-if="state.canvas?.instance_id" class="btn btn-secondary" t-on-click="instanceDetails" t-att-disabled="state.busy">流程详情</button>
                     <button t-if="state.canvas?.instance_id &amp;&amp; state.canvas.business_model" class="btn btn-secondary" t-on-click="businessClick" t-att-disabled="state.busy">查看业务单据</button>
                     <button class="btn btn-secondary" t-on-click="refreshClick" t-att-disabled="state.busy" aria-label="刷新"><i class="fa fa-refresh" aria-hidden="true"/></button>
                 </div>
             </header>
             <div t-if="state.error" class="alert alert-danger m-2" role="alert" t-esc="state.error"/>
             <div t-if="state.busy" class="wf-loading" role="status">正在处理…</div>
-            <div class="wf-react-root" t-ref="canvas"/>
+            <WorkflowRuntime t-if="state.canvas?.instance_id &amp;&amp; !state.graphVisible"
+                             canvas="state.canvas" busy="state.busy"
+                             complete.bind="complete" decide.bind="decide"
+                             projectDecision.bind="projectDecision" projectOpen.bind="projectOpen"/>
+            <div t-elif="!params.instance_id || state.graphVisible" class="wf-react-root" t-ref="canvas"/>
         </div>
     </t>
 </templates>

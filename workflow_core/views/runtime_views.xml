@@ -1,16 +1,16 @@
 <odoo>
     <record id="instance_list" model="ir.ui.view">
         <field name="name">workflow.instance.list</field><field name="model">workflow.instance</field>
-        <field name="arch" type="xml"><list create="0" delete="0">
+        <field name="arch" type="xml"><list create="0" delete="0" action="action_monitor" type="object">
             <field name="name" string="名称"/><field name="starter_id" string="发起人"/><field name="state" string="状态" widget="badge"/><field name="create_date" string="创建时间"/>
             <field name="company_id" string="所属公司" groups="base.group_multi_company"/>
-            <button name="action_monitor" type="object" string="执行监控" icon="fa-sitemap"/>
+            <button name="action_monitor" type="object" string="查看进度" icon="fa-sitemap"/>
         </list></field>
     </record>
     <record id="instance_form" model="ir.ui.view">
         <field name="name">workflow.instance.form</field><field name="model">workflow.instance</field>
         <field name="arch" type="xml"><form create="0" edit="0" delete="0">
-            <header><button name="action_monitor" type="object" string="执行监控" class="btn-primary"/>
+            <header><button name="action_monitor" type="object" string="查看进度" class="btn-primary"/>
                 <button name="action_cancel" type="object" string="取消流程" confirm="取消后将关闭未完成的任务，保留执行历史。" invisible="state != 'running'" groups="workflow_core.group_executor"/>
                 <field name="state" string="状态" widget="statusbar"/></header>
             <sheet><group><field name="name" string="名称"/><field name="version_id" string="流程版本"/><field name="starter_id" string="发起人"/><field name="create_date" string="创建时间"/><field name="finished_at" string="结束时间"/></group>
@@ -20,7 +20,7 @@
     </record>
     <record id="task_list" model="ir.ui.view">
         <field name="name">workflow.task.list</field><field name="model">workflow.task</field>
-        <field name="arch" type="xml"><list create="0" delete="0">
+        <field name="arch" type="xml"><list create="0" delete="0" action="action_monitor" type="object">
             <field name="name" string="名称"/><field name="instance_id" string="流程实例"/><field name="assignee_id" string="负责人"/><field name="state" string="状态" widget="badge"/><field name="create_date" string="创建时间"/>
             <button name="action_monitor" type="object" string="查看流程"/>
         </list></field>
