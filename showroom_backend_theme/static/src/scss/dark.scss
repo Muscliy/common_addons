@@ -1,6 +1,24 @@
 // Native views compile with dark variables; shared dashboard tokens follow them.
 :root {
     color-scheme: dark;
+    // Business addons use these optional tokens with their original Light
+    // colors as fallbacks, so they also work without this theme installed.
+    --o-theme-surface: #{$o-view-background-color};
+    --o-theme-surface-soft: #{$o-gray-100};
+    --o-theme-line: #{$o-gray-300};
+    --o-theme-ink: #{$o-main-text-color};
+    --o-theme-muted: #{$o-main-color-muted};
+    --o-theme-link: #{$o-main-link-color};
+    --o-theme-success-bg: #{mix($o-success, $o-view-background-color, 15%)};
+    --o-theme-warning-bg: #{mix($o-warning, $o-view-background-color, 12%)};
+    --o-theme-danger-bg: #{mix($o-danger, $o-view-background-color, 12%)};
+    --o-theme-success-text: #{mix($o-success, $o-main-text-color, 40%)};
+    --o-theme-warning-text: #{mix($o-warning, $o-main-text-color, 40%)};
+    --o-theme-danger-text: #{mix($o-danger, $o-main-text-color, 40%)};
+    --o-theme-purple-bg: #{mix($o-exceed, $o-view-background-color, 22%)};
+    --o-theme-purple-text: #{mix($o-exceed, $o-main-text-color, 35%)};
+    --o-theme-pink-bg: #3b2735;
+    --o-theme-pink-text: #f0aaca;
 }
 
 // Discuss adds its own navbar surface; keep the shared navigation consistent.
@@ -10,6 +28,12 @@
 
 .modal-dialog .o_form_view .o_form_sheet_bg {
     background-color: $o-view-background-color;
+}
+
+// React Flow otherwise chooses its palette from the operating system.
+.o_workflow_action .react-flow {
+    color-scheme: inherit;
+    --xy-background-color: var(--wf-background);
 }
 
 .o_cwc_dashboard {
