@@ -36,6 +36,22 @@
     .wf-node { width: 164px; padding: 12px 16px; border: 1px solid var(--wf-border); border-radius: 8px; background: var(--wf-surface); color: var(--wf-text); }
     .wf-node-kind { font-size: 12px; color: var(--wf-muted); margin-bottom: 6px; }
     .wf-node strong { font-size: 14px; overflow-wrap: anywhere; }
+    .wf-node .react-flow__handle {
+        width: 14px;
+        height: 14px;
+        border: 2px solid var(--wf-surface);
+        box-shadow: 0 0 0 1px var(--wf-brand);
+    }
+    .wf-node .react-flow__handle.connectionindicator::before {
+        // 扩大命中区域，同时保留连线锚点的位置。
+        content: "";
+        position: absolute;
+        inset: 50% auto auto 50%;
+        width: 36px;
+        height: 36px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+    }
     .wf-start, .wf-end { border-radius: 24px; }
     .selected .wf-node { outline: 2px solid var(--wf-brand); outline-offset: 2px; }
     .wf-state-done { border-left: 4px solid var(--wf-success); }
