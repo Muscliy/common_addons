@@ -4,6 +4,7 @@ import { ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFl
 import { nodeTypes } from './node.jsx';
 import { Properties } from './properties.jsx';
 import { NodeActions } from './node_actions.jsx';
+import { conditionLabel } from './condition_label.js';
 import { approvalDirectory, nodeReviewers } from './node_reviewers.jsx';
 import { connectedSides, defaultHandles, exampleGraph, labels, serialise } from './graph.js';
 
@@ -53,8 +54,12 @@ function Canvas({ canvas, assignees = [], onChange, onReady, onComplete, onDecis
         });
     };
     const executions = Object.fromEntries((canvas.executions || []).map((e) => [e.node, e]));
-    const displayEdges = edges.map(e => ({ ...defaultHandles, ...e,
-        label: e.data?.default ? '默认' : e.data?.rule && Object.keys(e.data.rule).length ? '满足条件' : '' }));
+    const displayEdges = edges.map(edge => {
+        const text = conditionLabel(edge.data, canvas.fields);
+        const characters = Array.from(text);
+        const label = characters.length > 48 ? characters.slice(0, 47).join('') + '…' : text;
+        return { ...defaultHandles, ...edge, label, ariaLabel: text || undefined };
+    });
     const connected = connectedSides(displayEdges);
     const directory = approvalDirectory(canvas.approval_labels, canvas.node_options?.approval);
     const approvals = new Map((canvas.approvals || []).map(approval => [approval.node, approval]));

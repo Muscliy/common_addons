@@ -1,6 +1,7 @@
 import React from 'react';
 
-const operators = { eq: '等于', ne: '不等于', gt: '大于', ge: '大于等于', lt: '小于', le: '小于等于' };
+import { operators } from './condition_label.js';
+
 const numeric = ['integer', 'float', 'monetary'];
 
 function defaultValue(info) {
@@ -19,7 +20,7 @@ function Leaf({ rule, fields, change, disabled }) {
         </select>
         <select className="form-select" aria-label="比较方式" disabled={disabled} value={rule.op || 'eq'}
             onChange={(e) => change({ ...rule, op: e.target.value })}>
-            {options.map((op) => <option key={op} value={op}>{operators[op]}</option>)}
+            {options.map((op) => <option key={op} value={op}>{operators[op].name}</option>)}
         </select>
         {info?.type === 'boolean' ? <select className="form-select" aria-label="比较值" disabled={disabled}
             value={String(rule.value)} onChange={(e) => change({ ...rule, value: e.target.value === 'true' })}>

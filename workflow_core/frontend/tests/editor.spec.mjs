@@ -125,6 +125,25 @@ test('node actions edit properties, persist color and remove incident connection
     await expect(page.locator('.wf-handle-connected')).toHaveCount(0);
 });
 
+test('condition edge shows the comparison and updates as the rule is edited', async ({ page }) => {
+    const initial = structuredClone(graph);
+    initial.nodes[1].type = 'condition';
+    initial.nodes[1].data.label = '报销金额判断';
+    initial.edges = [
+        { id: 'finance', source: 'task', target: 'end',
+            data: { default: false, rule: { all: [{ field: 'total_amount', op: 'ge', value: 3000 }] } } },
+    ];
+    await mount(page, true, initial, { fields: { total_amount: { string: '报销金额', type: 'monetary' } } });
+    const line = page.locator('[data-id="finance"].react-flow__edge');
+    await expect(line.getByText('≥ 3,000', { exact: true })).toBeVisible();
+    await line.locator('.react-flow__edge-interaction').evaluate(path => path.dispatchEvent(new MouseEvent('click', { bubbles: true })));
+    await expect(page.getByLabel('比较方式')).toHaveValue('ge');
+    await page.getByLabel('比较值').fill('4500');
+    await expect(line.getByText('≥ 4,500', { exact: true })).toBeVisible();
+    await page.getByLabel('默认出口').check();
+    await expect(line.getByText('默认', { exact: true })).toBeVisible();
+});
+
 test('readonly mode prevents dragging, adding, editing and deletion', async ({ page }) => {
     await mount(page, false);
     await page.locator('[data-id="task"]').click();
