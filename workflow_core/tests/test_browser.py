@@ -34,6 +34,9 @@ class TestWorkflowBrowser(HttpCase):
         graph["nodes"][1]["type"] = "condition"
         graph["nodes"][2]["position"] = {"x": 230, "y": 140}
         graph["edges"][1].update(sourceHandle="bottom", targetHandle="top")
+        graph["edges"][1]["data"]["rule"] = {
+            "all": [{"field": "total_amount", "op": "ge", "value": 3000}],
+        }
         preview.version_ids.save_graph(graph, 0)
         action = self.env.ref("workflow_core.definitions")
         self.browser_js(
@@ -165,6 +168,14 @@ class TestWorkflowBrowser(HttpCase):
                 lambda node: node.key == "task",
             ).background_color,
             "green",
+        )
+        self.browser_js(
+            f"/odoo/workflow-designer/{preview.version_ids.id}",
+            "console.log('test successful');",
+            """[...document.querySelectorAll('.react-flow__edge-text')]
+                .some(label => label.textContent === '≥ 3,000')""",
+            login=user.login,
+            timeout=60,
         )
         for path, label, view in (
             (
