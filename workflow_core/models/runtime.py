@@ -75,6 +75,7 @@ class WorkflowInstance(models.Model):
     node_instance_ids = fields.One2many("workflow.node.instance", "instance_id")
     task_ids = fields.One2many("workflow.task", "instance_id")
     log_ids = fields.One2many("workflow.execution.log", "instance_id")
+    token_ids = fields.One2many("workflow.token", "instance_id")
     _request_unique = models.Constraint(
         "UNIQUE(definition_id, starter_id, request_key)",
         "请求已处理。",
@@ -130,6 +131,15 @@ class WorkflowInstance(models.Model):
                     }
                     for n in self.node_instance_ids
                 ],
+                "tokens": [
+                    {
+                        "id": t.id,
+                        "node": t.node_id.key,
+                        "state": t.state,
+                        "parent_id": t.parent_id.id or 0,
+                    }
+                    for t in self.token_ids
+                ],
                 "tasks": [
                     {
                         "id": t.id,
@@ -172,15 +182,25 @@ class WorkflowInstance(models.Model):
             if self.state != "running":
                 raise UserError(self.env._("已结束的流程不能取消。"))
             elevated = self.sudo()
-            elevated.task_ids.filtered(lambda t: t.state == "pending").write(
-                {"state": "cancelled"},
-            )
-            elevated.node_instance_ids.filtered(lambda n: n.state == "waiting").write(
-                {"state": "cancelled"},
-            )
+            elevated._close_open_work()
             elevated.write({"state": "cancelled", "finished_at": fields.Datetime.now()})
             elevated._log("cancelled", self.env.uid)
         return True
+
+    def _close_open_work(self) -> None:
+        require_internal_write(self)
+        self.task_ids.filtered(lambda t: t.state == "pending").write(
+            {"state": "cancelled"},
+        )
+        self.node_instance_ids.filtered(lambda n: n.state == "waiting").write(
+            {
+                "state": "cancelled",
+                "finished_at": fields.Datetime.now(),
+            },
+        )
+        self.token_ids.filtered(lambda t: t.state in ("active", "waiting")).write(
+            {"state": "cancelled"},
+        )
 
     def _log(self, event: str, actor_id: int, node=None, comment: str = "") -> None:
         self.env["workflow.execution.log"].sudo().create(
@@ -212,6 +232,7 @@ class WorkflowNodeInstance(models.Model):
         index=True,
     )
     node_id = fields.Many2one("workflow.node", required=True, ondelete="restrict")
+    token_id = fields.Many2one("workflow.token", ondelete="restrict", index=True)
     state = fields.Selection(
         [("waiting", "等待办理"), ("done", "已完成"), ("cancelled", "已取消")],
         required=True,

@@ -7,6 +7,28 @@ from .common import WorkflowCase, sequential
 
 @tagged("post_install", "-at_install")
 class TestSecurity(WorkflowCase):
+    def test_start_context_defaults_cannot_inject_tokens_or_terminal_state(self):
+        definition = self.published()
+        target = definition.published_version_id.node_ids.filtered(
+            lambda n: n.kind == "end",
+        )
+        instance = self.instance(
+            definition.with_context(
+                default_state="done",
+                default_token_ids=[
+                    Command.create(
+                        {"key": "injected", "node_id": target.id, "state": "done"},
+                    ),
+                ],
+                default_comment="forged history",
+            ),
+        )
+        self.assertEqual(instance.state, "running")
+        self.assertEqual(instance.token_ids.mapped("key"), ["root"])
+        self.assertFalse(instance.log_ids.filtered("comment"))
+        instance.task_ids.action_complete()
+        self.assertEqual(instance.state, "done")
+
     def test_design_publish_execute_roles_are_separate(self):
         definition = self.definition()
         version = definition.version_ids
@@ -74,6 +96,8 @@ class TestSecurity(WorkflowCase):
         for record, method in ((version, "get_canvas"), (instance, "get_monitor")):
             with self.assertRaises(AccessError):
                 getattr(record.with_user(self.manager), method)()
+        with self.assertRaises(AccessError):
+            instance.token_ids.with_user(self.manager).read(["state"])
         with self.assertRaises(AccessError):
             definition.with_user(self.manager).action_start()
 

@@ -1,4 +1,5 @@
 from odoo.tests import TransactionCase, new_test_user
+from odoo.tools import SQL
 
 
 def node(key, kind="task", assignee=0):
@@ -94,3 +95,92 @@ class WorkflowCase(TransactionCase):
             .browse(action["params"]["instance_id"])
             .with_user(user or self.worker)
         )
+
+
+def parallel_graph(assignee=0):
+    graph = {
+        "nodes": [
+            node("start", "start"),
+            node("fork", "fork"),
+            node("left", assignee=assignee),
+            node("right", assignee=assignee),
+            node("join", "join"),
+            node("after", assignee=assignee),
+            node("end", "end"),
+        ],
+        "edges": [
+            edge("start", "fork"),
+            edge("fork", "left"),
+            edge("fork", "right"),
+            edge("left", "join"),
+            edge("right", "join"),
+            edge("join", "after"),
+            edge("after", "end"),
+        ],
+        "viewport": {"x": 0, "y": 0, "zoom": 1},
+    }
+    graph["nodes"][1]["data"]["config"] = {"join": "join"}
+    return graph
+
+
+def purge_tokens(cr, definition_id):
+    """Break the token/activation history cycle only for a committed test fixture."""
+    scope = "SELECT id FROM abt_workflow_instance WHERE definition_id = %s"
+    cr.execute(
+        "UPDATE abt_workflow_node_instance SET token_id = NULL WHERE instance_id IN ("
+        + scope
+        + ")",
+        [definition_id],
+    )
+    cr.execute(
+        "UPDATE abt_workflow_token SET parent_id = NULL WHERE instance_id IN ("
+        + scope
+        + ")",
+        [definition_id],
+    )
+    cr.execute(
+        "DELETE FROM abt_workflow_token WHERE instance_id IN (" + scope + ")",
+        [definition_id],
+    )
+
+
+def purge_workflow(cr, definition_id):
+    purge_tokens(cr, definition_id)
+    for table in (
+        "abt_workflow_execution_log",
+        "abt_workflow_task",
+        "abt_workflow_node_instance",
+    ):
+        cr.execute(
+            SQL(
+                "DELETE FROM %s WHERE instance_id IN "
+                "(SELECT id FROM abt_workflow_instance WHERE definition_id = %s)",
+                SQL.identifier(table),
+                definition_id,
+            ),
+        )
+    cr.execute(
+        "DELETE FROM abt_workflow_instance WHERE definition_id = %s",
+        [definition_id],
+    )
+    cr.execute(
+        "UPDATE abt_workflow_definition SET published_version_id = NULL WHERE id = %s",
+        [definition_id],
+    )
+    for table in ("abt_workflow_edge", "abt_workflow_node"):
+        cr.execute(
+            SQL(
+                "DELETE FROM %s WHERE version_id IN "
+                "(SELECT id FROM abt_workflow_version WHERE definition_id = %s)",
+                SQL.identifier(table),
+                definition_id,
+            ),
+        )
+    cr.execute(
+        "DELETE FROM abt_workflow_version WHERE definition_id = %s",
+        [definition_id],
+    )
+    cr.execute(
+        "DELETE FROM abt_workflow_definition WHERE id = %s",
+        [definition_id],
+    )

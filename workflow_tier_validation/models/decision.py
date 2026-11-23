@@ -109,6 +109,7 @@ class WorkflowApproval(models.Model):
             },
         )
         if rejected:
+            instance._close_open_work()
             instance.write({"state": "rejected", "finished_at": fields.Datetime.now()})
         else:
             advance(instance, activation.node_id, record, actor_id)

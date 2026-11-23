@@ -121,3 +121,23 @@ test('monitor decisions carry fixed review ids and rejection requires a comment'
         canvas: { ...window.props.canvas, approvals: window.props.canvas.approvals.map(a => ({ ...a, can_review: false })) } }));
     await expect(page.getByRole('button', { name: '通过', exact: true })).toHaveCount(0);
 });
+
+test('parallel pairing is editable, serialized and frozen in monitor mode', async ({ page }) => {
+    const initial = structuredClone(graph);
+    initial.nodes[1].type = 'fork';
+    initial.nodes[1].data.config = { join: 'join' };
+    initial.nodes.push({ id: 'join', type: 'join', position: { x: 500, y: 300 }, data: { label: '全部完成', assignee_id: 0 } });
+    initial.nodes.push({ id: 'other_join', type: 'join', position: { x: 800, y: 300 }, data: { label: '第二汇合', assignee_id: 0 } });
+    const types = [['start', '开始'], ['fork', '并行分支'], ['join', '并行汇合'], ['end', '结束']];
+    await mount(page, true, initial, { node_types: types });
+    await page.locator('[data-id="task"]').click();
+    await page.getByLabel('汇合节点', { exact: true }).selectOption('other_join');
+    const saved = await page.evaluate(() => window.getGraph());
+    expect(saved.nodes[1].data.config).toEqual({ join: 'other_join' });
+    await page.evaluate(saved => window.bridge.update({ ...window.props,
+        canvas: { ...window.props.canvas, id: 2, graph: saved, can_edit: false,
+            instance_id: 9, executions: [{ node: 'join', state: 'waiting' }] } }), saved);
+    await page.locator('[data-id="task"]').click();
+    await expect(page.getByLabel('汇合节点', { exact: true })).toBeDisabled();
+    await expect(page.locator('[data-id="join"]')).toContainText('等待分支');
+});

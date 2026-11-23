@@ -78,7 +78,14 @@ class WorkflowNode(models.Model):
         return result
 
     def _validate_config(self, kind: str, config: dict, version) -> None:
-        if config:
+        if kind == "fork":
+            if (
+                set(config) != {"join"}
+                or not isinstance(config["join"], str)
+                or not config["join"]
+            ):
+                raise ValidationError(self.env._("请选择并行分支的汇合节点。"))
+        elif config:
             raise ValidationError(self.env._("此节点类型不接受额外配置。"))
 
     def _waits_for_input(self) -> bool:

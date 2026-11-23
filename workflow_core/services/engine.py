@@ -1,6 +1,9 @@
+from collections import deque
+
 from odoo import Command, fields
 from odoo.exceptions import UserError
 
+from .parallel import activation_token, arrive, root_token, split
 from .rules import evaluate_rule
 
 
@@ -38,6 +41,21 @@ def start_instance(definition, record, request_key: str):
 
 
 def advance(instance, node, record, actor_id: int) -> None:
+    activation = instance.node_instance_ids.filtered(lambda a: a.node_id == node)
+    token = activation_token(instance, activation)
+    _drive(
+        instance,
+        [(edge.target_id, token) for edge in _exits(instance, node, record)],
+        record,
+        actor_id,
+    )
+
+
+def activate(instance, node, record, actor_id: int) -> None:
+    _drive(instance, [(node, root_token(instance, node))], record, actor_id)
+
+
+def _exits(instance, node, record):
     edges = instance.version_id.edge_ids.filtered(lambda e: e.source_id == node).sorted(
         "sequence",
     )
@@ -46,49 +64,72 @@ def advance(instance, node, record, actor_id: int) -> None:
             lambda e: not e.is_default and evaluate_rule(e.rule, record),
         )[:1]
         edges = selected or edges.filtered("is_default")
-    if len(edges) != 1:
-        raise UserError(instance.env._("流程出口配置无效, 未推进任务。"))
-    activate(instance, edges.target_id, record, actor_id)
+    if (node.kind == "fork" and len(edges) < 2) or (
+        node.kind != "fork" and len(edges) != 1
+    ):
+        raise UserError(instance.env._("流程出口配置无效，执行已回滚。"))
+    return edges
 
 
-def activate(instance, node, record, actor_id: int) -> None:
-    """MVP 无环且一次仅一条执行路径, 受发布校验和唯一约束共同保护。"""
-    # 迭代自动节点, 避免长顺序图造成 Python 递归栈溢出。
-    for _step in range(201):
-        node.ensure_one()
-        waiting = node._waits_for_input()
-        activation = (
-            instance.env["workflow.node.instance"]
-            .sudo()
-            .create(
-                {
-                    "instance_id": instance.id,
-                    "node_id": node.id,
-                    "state": "waiting" if waiting else "done",
-                    "finished_at": False if waiting else fields.Datetime.now(),
-                },
-            )
-        )
-        instance._log("waiting" if waiting else "node_completed", actor_id, node)
-        if waiting:
-            node._activate_input(instance, activation, record, actor_id)
+def _drive(instance, initial: list, record, actor_id: int) -> None:
+    """Instance lock and the caller's savepoint cover all tokens and side effects."""
+    jobs = deque(initial)
+    for _step in range(1001):
+        if not jobs:
             return
+        node, token = jobs.popleft()
+        token.write({"node_id": node.id})
+        if node.kind == "join":
+            parent = arrive(instance, node, token, actor_id)
+            if parent:
+                jobs.extend(
+                    (e.target_id, parent) for e in _exits(instance, node, record)
+                )
+            continue
+        activation = _activate_node(instance, node, token, record, actor_id)
+        if node._waits_for_input():
+            continue
         if node.kind == "end":
-            instance.write({"state": "done", "finished_at": fields.Datetime.now()})
-            instance._log("completed", actor_id, node)
-            return
-        edges = instance.version_id.edge_ids.filtered(
-            lambda e: e.source_id == node,
-        ).sorted("sequence")
-        if node.kind == "condition":
-            selected = edges.filtered(
-                lambda e: not e.is_default and evaluate_rule(e.rule, record),
-            )[:1]
-            edges = selected or edges.filtered("is_default")
-        if len(edges) != 1:
-            raise UserError(instance.env._("节点出口无效, 执行已回滚。"))
-        node = edges.target_id
+            _finish(instance, token, node, actor_id)
+            continue
+        edges = _exits(instance, node, record)
+        if node.kind == "fork":
+            jobs.extend(split(instance, activation, token, edges, actor_id))
+        else:
+            jobs.extend((e.target_id, token) for e in edges)
     raise UserError(instance.env._("流程超过自动推进步数限制。"))
+
+
+def _activate_node(instance, node, token, record, actor_id: int):
+    waiting = node._waits_for_input()
+    activation = (
+        instance.env["workflow.node.instance"]
+        .sudo()
+        .create(
+            {
+                "instance_id": instance.id,
+                "node_id": node.id,
+                "token_id": token.id,
+                "state": "waiting" if waiting else "done",
+                "finished_at": False if waiting else fields.Datetime.now(),
+            },
+        )
+    )
+    instance._log("waiting" if waiting else "node_completed", actor_id, node)
+    if waiting:
+        token.write({"state": "waiting"})
+        node._activate_input(instance, activation, record, actor_id)
+    return activation
+
+
+def _finish(instance, token, node, actor_id: int) -> None:
+    if token.parent_id:
+        raise UserError(instance.env._("并行分支尚未汇合，不能结束流程。"))
+    token.write({"state": "done"})
+    if instance.token_ids.filtered(lambda t: t.state in ("active", "waiting")):
+        raise UserError(instance.env._("仍有未完成的执行令牌，不能结束流程。"))
+    instance.write({"state": "done", "finished_at": fields.Datetime.now()})
+    instance._log("completed", actor_id, node)
 
 
 def create_task(instance, activation, record) -> None:

@@ -9,6 +9,7 @@ from odoo.tools import SQL
 
 from .common import approval_graph
 from odoo.addons.workflow_core.tests import test_concurrency as core_concurrency
+from odoo.addons.workflow_core.tests.common import purge_tokens
 
 
 @tagged("post_install", "-at_install")
@@ -103,6 +104,7 @@ class TestApprovalConcurrency(TransactionCase):
     def _cleanup(self, env, definition_id, user_id, group_id):
         # Only the exact fixture committed by this test is removed; runtime APIs stay append-only.
         cr = env.cr
+        purge_tokens(cr, definition_id)
         cr.execute(
             "DELETE FROM tier_review WHERE workflow_approval_id IN "
             "(SELECT id FROM abt_workflow_approval WHERE instance_id IN "

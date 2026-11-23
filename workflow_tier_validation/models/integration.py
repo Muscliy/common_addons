@@ -100,26 +100,24 @@ class WorkflowInstance(models.Model):
             raise AccessError(self.env._("审批单不属于当前流程。"))
         return approval.action_decide(decision, comment, review_id)
 
-    def action_cancel(self) -> bool:
-        # 在核心同一 savepoint 内关闭审批及 review, 任一失败整笔回滚。
-        with self.env.cr.savepoint():
-            result = super().action_cancel()
-            for approval in (
-                self.env["workflow.approval"]
-                .sudo()
-                .search(
-                    [
-                        ("instance_id", "in", self.ids),
-                        ("state", "=", "pending"),
-                    ],
+    def _close_open_work(self) -> None:
+        super()._close_open_work()
+        approvals = (
+            self.env["workflow.approval"]
+            .sudo()
+            .search(
+                [
+                    ("instance_id", "in", self.ids),
+                    ("state", "=", "pending"),
+                ],
+            )
+        )
+        for approval in approvals:
+            with approval_scope(approval.node_instance_id):
+                approval.review_ids.filtered(
+                    lambda r: r.status in ("pending", "waiting"),
+                ).write({"status": "cancel"})
+                approval.write(
+                    {"state": "cancelled", "finished_at": fields.Datetime.now()},
                 )
-            ):
-                with approval_scope(approval.node_instance_id):
-                    approval.review_ids.filtered(
-                        lambda r: r.status in ("pending", "waiting"),
-                    ).write({"status": "cancel"})
-                    approval.write(
-                        {"state": "cancelled", "finished_at": fields.Datetime.now()},
-                    )
-                    approval._update_counter({"review_deleted": True})
-            return result
+                approval._update_counter({"review_deleted": True})
