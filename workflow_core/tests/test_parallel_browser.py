@@ -12,7 +12,7 @@ class TestParallelBrowser(WorkflowCase, HttpCase):
         action = self.env["ir.actions.client"].create(
             {
                 "name": "Parallel browser test",
-                "tag": "workflow_core.canvas",
+                "tag": "workflow_core.monitor",
                 "params": {"instance_id": instance.id},
             },
         )

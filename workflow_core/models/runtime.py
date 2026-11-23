@@ -90,7 +90,7 @@ class WorkflowInstance(models.Model):
         self._business_record()
         return {
             "type": "ir.actions.client",
-            "tag": "workflow_core.canvas",
+            "tag": "workflow_core.monitor",
             "name": self.name,
             "params": {"instance_id": self.id},
         }

@@ -10,6 +10,12 @@ import { useSetupAction } from "@web/search/action_hook";
 export class WorkflowAction extends Component {
     static template = "workflow_core.Action";
     static props = ["*"];
+    static path = "workflow-designer";
+    static recordParam = "version_id";
+
+    static extractProps(action) {
+        return { resId: action.params?.[this.recordParam] };
+    }
 
     setup() {
         this.orm = useService("orm");
@@ -21,7 +27,11 @@ export class WorkflowAction extends Component {
         this.alive = true;
         this.assignees = [];
         this.requestKey = crypto.randomUUID();
-        this.params = this.props.action.params || {};
+        const params = this.props.action.params || {};
+        const recordParam = this.constructor.recordParam;
+        this.params = {
+            [recordParam]: params[recordParam] || this.props.resId || params.resId,
+        };
         useSetupAction({
             beforeLeave: () => this.confirmDiscard(),
             beforeUnload: (event) => {
@@ -41,8 +51,12 @@ export class WorkflowAction extends Component {
     async load() {
         if (!this.alive) return;
         const instance = this.params.instance_id;
+        const recordId = instance || this.params.version_id;
+        if (!Number.isSafeInteger(recordId) || recordId <= 0) {
+            throw new Error(_t("链接缺少有效的流程记录编号，请从工作流菜单重新打开。"));
+        }
         const canvas = await this.orm.call(instance ? "workflow.instance" : "workflow.version",
-            instance ? "get_monitor" : "get_canvas", [[instance || this.params.version_id]]);
+            instance ? "get_monitor" : "get_canvas", [[recordId]]);
         let assignees = canvas.assignees || [];
         if (canvas.can_edit) assignees = await this.orm.call("workflow.version", "get_assignees", [[canvas.id]]);
         if (!this.alive) return;
@@ -167,6 +181,16 @@ export class WorkflowAction extends Component {
         });
     }
 
+    openParent() {
+        if (this.constructor.recordParam === "instance_id") {
+            return this.action.doAction("workflow_core.instances", { clearBreadcrumbs: true });
+        }
+        const definitionId = this.state.canvas?.definition_id;
+        const options = { clearBreadcrumbs: true };
+        if (definitionId) Object.assign(options, { viewType: "form", props: { resId: definitionId } });
+        return this.action.doAction("workflow_core.definitions", options);
+    }
+
     confirmDiscard() {
         if (!this.state.dirty) return Promise.resolve(true);
         return new Promise((resolve) => this.dialog.add(ConfirmationDialog, {
@@ -183,3 +207,10 @@ export class WorkflowAction extends Component {
 }
 
 registry.category("actions").add("workflow_core.canvas", WorkflowAction);
+
+export class WorkflowMonitorAction extends WorkflowAction {
+    static path = "workflow-monitor";
+    static recordParam = "instance_id";
+}
+
+registry.category("actions").add("workflow_core.monitor", WorkflowMonitorAction);
