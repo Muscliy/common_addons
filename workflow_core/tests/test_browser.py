@@ -144,7 +144,26 @@ class TestWorkflowBrowser(HttpCase):
                 if (button('保存')) throw new Error('Published canvas remained editable');
                 await wait(() => document.querySelector('.wf-color-green'), 'published node background');
                 await click('启动流程');
+                const fileInput = await wait(() => document.querySelector(
+                    '.modal .o_field_widget[name="attachment_ids"] input[type="file"]'
+                ), 'native attachment uploader');
+                const transfer = new DataTransfer();
+                transfer.items.add(new File(['receipt for test'], 'receipt.txt', { type: 'text/plain' }));
+                fileInput.files = transfer.files;
+                fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+                await wait(() => document.querySelector('.modal .o_attachment_many2many')?.textContent.includes('receipt.txt'),
+                    'uploaded receipt');
+                (await wait(() => document.querySelector('.modal button[name="action_submit"]'), 'submit workflow')).click();
                 await wait(() => button('完成任务'), 'task created');
+                const attachment = await wait(() => document.querySelector('.wf-runtime [aria-label="发起附件"] a'), 'runtime attachment');
+                if (!attachment.textContent.includes('receipt.txt') || await (await fetch(attachment.href)).text() !== 'receipt for test') {
+                    throw new Error('Submitted attachment was not available in the workflow');
+                }
+                await click('流程详情');
+                await wait(() => document.querySelector('.o_form_view .o_attachment_many2many')?.textContent.includes('receipt.txt'),
+                    'attachment in native workflow details');
+                (await wait(() => document.querySelector('.o_form_view button[name="action_monitor"]'), 'open runtime from details')).click();
+                await wait(() => button('完成任务'), 'return to workflow');
                 if (document.querySelector('.react-flow')) throw new Error('Runtime should open without the canvas');
                 if (!document.querySelector('.wf-runtime')) throw new Error('Runtime page missing');
                 if (!/\/workflow-monitor\/[0-9]+$/.test(location.pathname)) {

@@ -1,5 +1,6 @@
 <odoo>
     <menuitem id="menu_root" name="工作流管理" sequence="30" groups="workflow_core.group_user"/>
+    <menuitem id="menu_start" name="发起流程" parent="menu_root" action="open_start_wizard" sequence="15" groups="workflow_core.group_executor"/>
     <menuitem id="menu_definitions" name="流程模板" parent="menu_root" action="definitions" sequence="10"/>
     <menuitem id="menu_pending" name="我的待办" parent="menu_root" action="my_pending" sequence="20" groups="workflow_core.group_executor"/>
     <menuitem id="menu_done" name="我的已办" parent="menu_root" action="my_done" sequence="30" groups="workflow_core.group_executor"/>

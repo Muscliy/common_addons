@@ -17,6 +17,16 @@
                         </ol>
                     </div>
                 </section>
+                <section t-if="props.canvas.attachments?.length" class="wf-runtime-card" aria-label="发起附件">
+                    <h2>发起附件</h2>
+                    <ul class="list-unstyled mb-0">
+                        <li t-foreach="props.canvas.attachments" t-as="file" t-key="file.id" class="mb-1">
+                            <a t-attf-href="/web/content/{{ file.id }}?download=true" class="text-break">
+                                <i class="fa fa-paperclip me-1" aria-hidden="true"/> <t t-esc="file.name"/>
+                            </a>
+                        </li>
+                    </ul>
+                </section>
                 <section class="wf-runtime-card" aria-label="当前办理">
                     <h2>当前办理</h2>
                     <t t-if="approvals.length || pendingTasks.length || projectTasks.length">
