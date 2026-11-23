@@ -16,7 +16,7 @@ class TestApprovalBrowser(ApprovalCase, HttpCase):
 
     def test_two_users_approve_sequentially_in_monitor(self):
         instance, approval = self.begin()
-        action = self._monitor_action(instance)
+        action = self.env.ref("workflow_tier_validation.my_approvals")
         code = r"""
             (async () => {
                 const wait = async condition => {
@@ -26,13 +26,11 @@ class TestApprovalBrowser(ApprovalCase, HttpCase):
                         await new Promise(resolve => setTimeout(resolve, 50));
                     }
                 };
-                const button = () => [...document.querySelectorAll('.wf-properties button')].find(el => el.textContent === '通过');
-                await wait(() => document.querySelectorAll('.wf-approval .wf-node-reviewer-name').length === 2);
-                const reviewer = document.querySelector('.wf-approval .wf-node-reviewer-name');
-                if (getComputedStyle(reviewer).color === getComputedStyle(reviewer.closest('.wf-node')).color) {
-                    throw new Error('Approval names must use their distinct color');
-                }
+                await wait(() => document.querySelector('.o_list_view .o_data_row'));
+                document.querySelector('.o_list_view .o_data_row .o_data_cell').click();
+                const button = () => [...document.querySelectorAll('.wf-runtime button')].find(el => el.textContent === '通过');
                 await wait(() => button() && !button().disabled);
+                if (document.querySelector('.react-flow')) throw new Error('Approval opened the graph');
                 button().click();
                 await wait(() => !document.querySelector('.wf-loading') && !button());
                 if (document.querySelector('.o_workflow_action [role=alert]')) throw new Error('Approval failed');

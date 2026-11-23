@@ -145,13 +145,19 @@ class TestWorkflowBrowser(HttpCase):
                 await wait(() => document.querySelector('.wf-color-green'), 'published node background');
                 await click('启动流程');
                 await wait(() => button('完成任务'), 'task created');
+                if (document.querySelector('.react-flow')) throw new Error('Runtime should open without the canvas');
+                if (!document.querySelector('.wf-runtime')) throw new Error('Runtime page missing');
                 if (!/\/workflow-monitor\/[0-9]+$/.test(location.pathname)) {
                     throw new Error('Monitor URL is missing the instance ID');
                 }
                 await click('完成任务');
                 await wait(() => document.querySelector('.wf-heading').textContent.includes('已完成'), 'completion');
                 if (button('完成任务')) throw new Error('Completed task remained actionable');
-                if (document.querySelectorAll('.wf-state-done').length !== 3) throw new Error('Monitor states incorrect');
+                if (document.querySelectorAll('.wf-progress-done').length !== 3) throw new Error('Runtime states incorrect');
+                await click('查看流程图');
+                await wait(() => document.querySelectorAll('.wf-state-done').length === 3, 'read-only graph');
+                await click('返回办理');
+                await wait(() => document.querySelector('.wf-runtime') && !document.querySelector('.react-flow'), 'return to runtime');
                 console.log('test successful');
             })();
         """,
@@ -202,7 +208,7 @@ class TestWorkflowBrowser(HttpCase):
                     throw new Error('Could not return from the workflow breadcrumb');
                 }})();
                 """,
-                "document.querySelectorAll('.react-flow__node').length === 3",
+                "!!document.querySelector('.wf-runtime') || document.querySelectorAll('.react-flow__node').length === 3",
                 login=user.login,
                 timeout=60,
             )

@@ -1,4 +1,4 @@
-import { Component, onMounted, onWillStart, onWillDestroy, useRef, useState } from "@odoo/owl";
+import { Component, onMounted, onPatched, onWillStart, onWillDestroy, useRef, useState } from "@odoo/owl";
 import { loadBundle } from "@web/core/assets";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
@@ -7,8 +7,11 @@ import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_d
 import { SelectCreateDialog } from "@web/views/view_dialogs/select_create_dialog";
 import { useSetupAction } from "@web/search/action_hook";
 
+import { WorkflowRuntime } from "./workflow_runtime";
+
 export class WorkflowAction extends Component {
     static template = "workflow_core.Action";
+    static components = { WorkflowRuntime };
     static props = ["*"];
     static path = "workflow-designer";
     static recordParam = "version_id";
@@ -23,7 +26,7 @@ export class WorkflowAction extends Component {
         this.notification = useService("notification");
         this.dialog = useService("dialog");
         this.container = useRef("canvas");
-        this.state = useState({ canvas: null, error: "", busy: false, dirty: false });
+        this.state = useState({ canvas: null, error: "", busy: false, dirty: false, graphVisible: false });
         this.alive = true;
         this.assignees = [];
         this.requestKey = crypto.randomUUID();
@@ -40,11 +43,12 @@ export class WorkflowAction extends Component {
         });
         onWillStart(async () => {
             await this.perform(async () => {
-                await loadBundle("workflow_core.canvas");
+                if (!this.params.instance_id) await loadBundle("workflow_core.canvas");
                 await this.load();
             });
         });
         onMounted(() => this.renderCanvas());
+        onPatched(() => { if (!this.bridge) this.renderCanvas(); });
         onWillDestroy(() => { this.alive = false; this.bridge?.destroy(); this.bridge = null; });
     }
 
@@ -66,6 +70,7 @@ export class WorkflowAction extends Component {
     }
 
     renderCanvas() {
+        if (this.params.instance_id && !this.state.graphVisible) return;
         if (!this.alive || !this.state.canvas || !this.container.el || !globalThis.WorkflowCanvas) return;
         const props = {
             canvas: { ...this.state.canvas, can_edit: this.state.canvas.can_edit && !this.state.busy },
@@ -199,9 +204,32 @@ export class WorkflowAction extends Component {
         }));
     }
 
+    toggleGraph() {
+        return this.perform(async () => {
+            if (this.state.graphVisible) {
+                this.bridge?.destroy();
+                this.bridge = null;
+                this.state.graphVisible = false;
+            } else {
+                await loadBundle("workflow_core.canvas");
+                if (this.alive) this.state.graphVisible = true;
+            }
+        });
+    }
+
+    instanceDetails() {
+        return this.action.doAction("workflow_core.instances", {
+            viewType: "form",
+            props: { resId: this.params.instance_id },
+        });
+    }
+
     async refreshClick() {
         if (await this.confirmDiscard()) await this.perform(async () => {
-            await loadBundle("workflow_core.canvas"); await this.load();
+            if (!this.params.instance_id || this.state.graphVisible) {
+                await loadBundle("workflow_core.canvas");
+            }
+            await this.load();
         });
     }
 }

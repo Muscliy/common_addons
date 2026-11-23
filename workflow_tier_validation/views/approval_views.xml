@@ -1,7 +1,7 @@
 <odoo>
     <record id="approval_list" model="ir.ui.view">
         <field name="name">workflow.approval.list</field><field name="model">workflow.approval</field>
-        <field name="arch" type="xml"><list create="0" delete="0">
+        <field name="arch" type="xml"><list create="0" delete="0" action="action_monitor" type="object">
             <field name="name" string="审批名称"/><field name="instance_id" string="流程实例"/><field name="requested_by" string="申请人"/><field name="state" string="状态" widget="badge"/>
             <field name="create_date" string="申请时间"/><button name="action_monitor" type="object" string="打开流程审批"/>
         </list></field>
