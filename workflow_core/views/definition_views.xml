@@ -2,8 +2,8 @@
     <record id="definition_list" model="ir.ui.view">
         <field name="name">workflow.definition.list</field><field name="model">workflow.definition</field>
         <field name="arch" type="xml">
-            <list><field name="name"/><field name="code"/><field name="model_id" groups="workflow_core.group_designer"/><field name="published_version_id"/>
-                <field name="company_id" groups="base.group_multi_company"/>
+            <list><field name="name" string="流程名称"/><field name="code" string="流程编码"/><field name="model_id" groups="workflow_core.group_designer"/><field name="published_version_id" string="当前发布版本"/>
+                <field name="company_id" string="所属公司" groups="base.group_multi_company"/>
                 <button name="action_designer" type="object" string="打开画布" icon="fa-sitemap"/>
             </list>
         </field>
@@ -19,14 +19,14 @@
                 <sheet>
                     <widget name="web_ribbon" title="已归档" bg_color="text-bg-warning" invisible="active"/>
                     <field name="active" invisible="1"/>
-                    <group><field name="name"/><field name="code"/><field name="model_id" groups="workflow_core.group_designer" options="{'no_create': True}"/>
+                    <group><field name="name" string="流程名称"/><field name="code" string="流程编码"/><field name="model_id" groups="workflow_core.group_designer" options="{'no_create': True}"/>
                         <field name="starter_group_ids" widget="many2many_tags" groups="workflow_core.group_designer" options="{'no_create': True}"/>
-                        <field name="company_id" groups="base.group_multi_company"/><field name="published_version_id"/>
+                        <field name="company_id" string="所属公司" groups="base.group_multi_company"/><field name="published_version_id" string="当前发布版本"/>
                         <field name="version_activated_by" string="最近启用人" invisible="not version_activated_by"/>
                         <field name="version_activated_at" string="最近启用时间" invisible="not version_activated_at"/>
                     </group>
                     <field name="version_ids" readonly="1">
-                        <list create="0" delete="0"><field name="number"/><field name="state"/><field name="published_by"/><field name="published_at"/>
+                        <list create="0" delete="0"><field name="number" string="版本号"/><field name="state" string="状态"/><field name="published_by" string="发布人"/><field name="published_at" string="发布时间"/>
                             <field name="is_current" string="当前版本"/>
                             <button name="action_designer" type="object" string="查看版本"/>
                             <button name="action_restore" type="object" string="启用此版本" groups="workflow_core.group_publisher"
