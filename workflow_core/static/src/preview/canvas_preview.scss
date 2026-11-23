@@ -1,0 +1,28 @@
+.o_field_workflow_canvas_preview {
+    display: block;
+    width: 100%;
+}
+
+.o_workflow_preview {
+    --wf-preview-surface: #{$o-view-background-color};
+    --wf-preview-border: #{$border-color};
+    --wf-preview-text: #{$o-main-text-color};
+    --wf-preview-muted: #{$o-main-color-muted};
+    --wf-preview-blue: #{$o-brand-primary};
+    --wf-preview-green: #{$o-success};
+    --wf-preview-amber: #{$o-warning};
+    --wf-preview-gray: #{$o-main-color-muted};
+
+    display: block;
+    width: 100%;
+    height: 132px;
+    margin: 8px 0;
+    border: 1px solid var(--wf-preview-border);
+    border-radius: var(--border-radius, 6px);
+    background-color: var(--wf-preview-surface);
+}
+
+.o_workflow_preview_graph {
+    background-image: radial-gradient(var(--wf-preview-border) .75px, transparent .75px);
+    background-size: 12px 12px;
+}

@@ -1,0 +1,10 @@
+<templates xml:space="preserve">
+    <t t-name="workflow_core.CanvasPreview">
+        <canvas t-if="graph?.nodes?.length" t-ref="preview"
+                class="o_workflow_preview o_workflow_preview_graph"
+                role="img" aria-label="流程画布预览"/>
+        <div t-else="" class="o_workflow_preview d-flex align-items-center justify-content-center text-muted small">
+            暂无流程节点
+        </div>
+    </t>
+</templates>

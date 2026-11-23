@@ -156,3 +156,41 @@ class TestSecurity(WorkflowCase):
         with self.assertRaises(AccessError):
             self.instance(definition)
         self.assertEqual(self.instance(definition, user=self.manager).state, "running")
+
+    def test_department_restricts_new_starts_within_the_workflow_company(self):
+        definition = self.published()
+        finance, sales = self.env["hr.department"].create(
+            [{"name": "Workflow finance"}, {"name": "Workflow sales"}],
+        )
+        self.env["hr.employee"].create(
+            [
+                {
+                    "name": "Finance worker",
+                    "user_id": self.worker.id,
+                    "department_id": finance.id,
+                },
+                {
+                    "name": "Sales worker",
+                    "user_id": self.other.id,
+                    "department_id": sales.id,
+                },
+            ],
+        )
+        existing = self.instance(definition, user=self.other, key="company-wide")
+        definition.department_id = finance
+        version = definition.published_version_id
+        worker_canvas = version.with_user(self.worker).get_canvas()
+        other_canvas = version.with_user(self.other).get_canvas()
+        self.assertTrue(worker_canvas["can_start"])
+        self.assertFalse(other_canvas["can_start"])
+        with self.assertRaises(AccessError):
+            self.instance(definition, user=self.other)
+        with self.assertRaises(AccessError):
+            self.instance(definition, user=self.manager)
+        self.assertEqual(self.instance(definition, user=self.worker).state, "running")
+        self.assertEqual(existing.state, "running")
+        finance.active = False
+        with self.assertRaises(AccessError):
+            self.instance(definition, user=self.worker, key="archived-department")
+        definition.department_id = False
+        self.assertEqual(self.instance(definition, user=self.other).state, "running")

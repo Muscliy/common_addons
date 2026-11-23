@@ -5,6 +5,7 @@
         <field name="arch" type="xml">
             <kanban records_draggable="0" quick_create="0">
                 <field name="published_version_id"/>
+                <field name="department_id"/>
                 <templates>
                     <t t-name="card">
                         <div class="d-flex justify-content-between align-items-start gap-2">
@@ -14,7 +15,12 @@
                             <span t-else="" class="badge rounded-pill text-bg-secondary">未发布</span>
                         </div>
                         <field name="code" class="text-muted"/>
-                        <field name="company_id" groups="base.group_multi_company" class="text-muted"/>
+                        <div class="d-flex flex-wrap gap-2 align-items-center text-muted">
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="department_id" t-if="record.department_id.raw_value"/>
+                            <span t-else="">全公司</span>
+                        </div>
+                        <field name="canvas_preview" widget="workflow_canvas_preview"/>
                         <footer>
                             <button name="action_designer" type="object" class="btn btn-outline-primary btn-sm"
                                     string="打开画布"/>
@@ -28,6 +34,7 @@
         <field name="name">workflow.definition.list</field><field name="model">workflow.definition</field>
         <field name="arch" type="xml">
             <list><field name="name" string="流程名称"/><field name="code" string="流程编码"/><field name="model_id" groups="workflow_core.group_designer"/><field name="published_version_id" string="当前发布版本"/>
+                <field name="department_id"/>
                 <field name="company_id" string="所属公司" groups="base.group_multi_company"/>
                 <button name="action_designer" type="object" string="打开画布" icon="fa-sitemap"/>
             </list>
@@ -45,7 +52,10 @@
                     <widget name="web_ribbon" title="已归档" bg_color="text-bg-warning" invisible="active"/>
                     <field name="active" invisible="1"/>
                     <group><field name="name" string="流程名称"/><field name="code" string="流程编码" required="0" placeholder="留空自动生成"/><field name="model_id" groups="workflow_core.group_designer" options="{'no_create': True}"/>
-                        <field name="starter_group_ids" widget="many2many_tags" groups="workflow_core.group_designer" options="{'no_create': True}"/>
+                        <field name="department_id" groups="workflow_core.group_designer" options="{'no_create': True}" placeholder="全公司"/>
+                        <field name="starter_group_ids" widget="many2many_tags" groups="workflow_core.group_designer"
+                               options="{'no_create': True}" invisible="not starter_group_ids"/>
+                        <field name="company_id" invisible="1" groups="!base.group_multi_company"/>
                         <field name="company_id" string="所属公司" groups="base.group_multi_company"/><field name="published_version_id" string="当前发布版本"/>
                         <field name="version_activated_by" string="最近启用人" invisible="not version_activated_by"/>
                         <field name="version_activated_at" string="最近启用时间" invisible="not version_activated_at"/>
@@ -61,6 +71,18 @@
                     </field>
                 </sheet>
             </form>
+        </field>
+    </record>
+    <record id="definition_search" model="ir.ui.view">
+        <field name="name">workflow.definition.search</field>
+        <field name="model">workflow.definition</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name" filter_domain="['|', ('name', 'ilike', self), ('code', 'ilike', self)]"/>
+                <field name="department_id"/>
+                <filter name="company_scope" string="全公司" domain="[('department_id', '=', False)]"/>
+                <filter name="department_scope" string="部门流程" domain="[('department_id', '!=', False)]"/>
+            </search>
         </field>
     </record>
     <record id="definitions" model="ir.actions.act_window">

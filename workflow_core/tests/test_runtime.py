@@ -117,8 +117,9 @@ class TestRuntime(WorkflowCase):
         with self.assertRaises(UserError):
             self.instance(definition, res_id=b.id)
 
-    def test_core_is_independent_and_tables_are_namespaced(self):
-        self.assertEqual(set(get_manifest("workflow_core")["depends"]), {"web", "mail"})
+    def test_core_has_standard_dependencies_and_namespaced_tables(self):
+        dependencies = get_manifest("workflow_core")["depends"]
+        self.assertEqual(set(dependencies), {"web", "mail", "hr"})
         for name in (
             "definition",
             "version",

@@ -1,5 +1,7 @@
 from odoo.tests import HttpCase, new_test_user, tagged
 
+from .common import sequential
+
 
 @tagged("post_install", "-at_install")
 class TestWorkflowBrowser(HttpCase):
@@ -25,6 +27,14 @@ class TestWorkflowBrowser(HttpCase):
             .with_user(user)
             .create({"name": "Browser workflow"})
         )
+        preview = definition.copy({"name": "Saved canvas preview"})
+        graph = sequential()
+        graph["nodes"][0]["position"] = {"x": 0, "y": 0}
+        graph["nodes"][1]["position"] = {"x": 230, "y": 0}
+        graph["nodes"][1]["type"] = "condition"
+        graph["nodes"][2]["position"] = {"x": 230, "y": 140}
+        graph["edges"][1].update(sourceHandle="bottom", targetHandle="top")
+        preview.version_ids.save_graph(graph, 0)
         action = self.env.ref("workflow_core.definitions")
         self.browser_js(
             f"/web?action={action.id}",
@@ -49,6 +59,17 @@ class TestWorkflowBrowser(HttpCase):
                 const templateCard = () => [...document.querySelectorAll('.o_kanban_view .o_kanban_record')]
                     .find(record => record.textContent.includes('Browser workflow'));
                 await wait(templateCard, 'default template kanban');
+                if (!templateCard().querySelector('.o_workflow_preview').textContent.includes('暂无流程节点')) {
+                    throw new Error('Empty templates must show an empty preview');
+                }
+                await wait(() => {
+                    const card = [...document.querySelectorAll('.o_kanban_view .o_kanban_record')]
+                        .find(record => record.textContent.includes('Saved canvas preview'));
+                    const canvas = card?.querySelector('canvas[aria-label="流程画布预览"]');
+                    if (!canvas?.width || !canvas.height) return false;
+                    const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+                    return pixels.some((value, index) => index % 4 === 3 && value > 0);
+                }, 'draw saved graph on the kanban card');
                 if (!templateCard().textContent.includes('未发布')) {
                     throw new Error('The draft template card must show its publication status');
                 }

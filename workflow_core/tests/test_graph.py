@@ -109,7 +109,9 @@ class TestGraph(WorkflowCase):
         )
         graph = draft.get_canvas()["graph"]
         graph["nodes"][1]["data"]["label"] = "New task"
+        self.assertEqual(definition.canvas_preview["nodes"][1]["label"], "first")
         draft.save_graph(graph, draft.revision)
+        self.assertEqual(definition.canvas_preview["nodes"][1]["label"], "New task")
         draft.action_publish(draft.revision)
         self.assertEqual(instance.version_id, old)
         self.assertEqual(instance.task_ids.name, "first")

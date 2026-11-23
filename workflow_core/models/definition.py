@@ -31,6 +31,13 @@ class WorkflowDefinition(models.Model):
         required=True,
         default=lambda self: self.env.company,
     )
+    department_id = fields.Many2one(
+        "hr.department",
+        string="所属部门",
+        domain="[('company_id', '=', company_id)]",
+        ondelete="restrict",
+        help="留空允许本公司有发起权限的用户启动。填写后仅所选部门的在职员工可以启动。",
+    )
     model_id = fields.Many2one(
         "ir.model",
         string="业务模型",
@@ -46,12 +53,13 @@ class WorkflowDefinition(models.Model):
     version_activated_by = fields.Many2one("res.users", readonly=True, copy=False)
     version_activated_at = fields.Datetime(readonly=True, copy=False)
     active = fields.Boolean(default=True)
+    canvas_preview = fields.Json(compute="_compute_canvas_preview")
     starter_group_ids = fields.Many2many(
         "res.groups",
         "abt_workflow_starter_group_rel",
         "definition_id",
         "group_id",
-        string="允许启动的用户组",
+        string="原有发起用户组",
     )
     _code_unique = models.Constraint(
         "UNIQUE(company_id, code)",
@@ -64,11 +72,16 @@ class WorkflowDefinition(models.Model):
             models.add("hr.expense")
         return models
 
-    @api.constrains("model_id", "company_id")
+    @api.constrains("model_id", "company_id", "department_id")
     def _check_scope(self):
         for record in self:
             if record.company_id not in self.env.companies:
                 raise AccessError(self.env._("不能维护未授权公司的流程。"))
+            if (
+                record.department_id
+                and record.department_id.company_id != record.company_id
+            ):
+                raise ValidationError(self.env._("所属部门必须属于流程的所属公司。"))
             if (
                 record.model_id
                 and record.model_id.sudo().model not in self._allowed_business_models()
@@ -148,13 +161,46 @@ class WorkflowDefinition(models.Model):
             },
         )
 
+    def _designer_version(self):
+        version = self.version_ids.sorted("number", reverse=True)[:1]
+        if version.state == "published":
+            return self.published_version_id or version
+        return version
+
+    @api.depends("published_version_id", "version_ids.state", "version_ids.revision")
+    def _compute_canvas_preview(self) -> None:
+        versions = {
+            definition.id: definition._designer_version() for definition in self
+        }
+        version_ids = [version.id for version in versions.values() if version]
+        for definition in self:
+            version = versions[definition.id].with_prefetch(version_ids)
+            definition.canvas_preview = {
+                "nodes": [
+                    {
+                        "id": node.key,
+                        "type": node.kind,
+                        "label": node.name,
+                        "position": node.position,
+                        "color": node.background_color,
+                    }
+                    for node in version.node_ids
+                ],
+                "edges": [
+                    {
+                        "source": line.source_id.key,
+                        "target": line.target_id.key,
+                        "sourceHandle": line.source_handle or "right",
+                        "targetHandle": line.target_handle or "left",
+                    }
+                    for line in version.edge_ids
+                ],
+            }
+
     def action_designer(self) -> dict:
         self.ensure_one()
         self.check_access("read")
-        version = self.version_ids.sorted("number", reverse=True)[:1]
-        if version.state == "published":
-            version = self.published_version_id or version
-        return version.action_designer()
+        return self._designer_version().action_designer()
 
     def action_new_version(self) -> dict:
         self.ensure_one()
@@ -180,6 +226,25 @@ class WorkflowDefinition(models.Model):
             version.save_graph(source.get_canvas()["graph"], 0)
             return version.action_designer()
 
+    def _starter_department_allowed(self) -> bool:
+        if not self.department_id:
+            return True
+        return bool(
+            self.env["hr.employee"]
+            .sudo()
+            .with_context(active_test=True)
+            .search_count(
+                [
+                    ("user_id", "=", self.env.uid),
+                    ("company_id", "=", self.company_id.id),
+                    ("department_id", "=", self.department_id.id),
+                    ("department_id.active", "=", True),
+                    ("department_id.company_id", "=", self.company_id.id),
+                ],
+                limit=1,
+            ),
+        )
+
     def action_start(
         self,
         res_id: int = 0,
@@ -202,6 +267,8 @@ class WorkflowDefinition(models.Model):
             lock_record(self)
             if not self.active or not self.published_version_id:
                 raise UserError(self.env._("流程尚未发布或已停用。"))
+            if not self._starter_department_allowed():
+                raise AccessError(self.env._("仅所属部门的在职员工可以发起此流程。"))
             record = business_record(self, res_id)
             instance = start_instance(self, record, key, expected_version_id)
             return instance.with_env(self.env).action_monitor()
