@@ -106,6 +106,7 @@ class WorkflowInstance(models.Model):
             "res_model": record._name,
             "res_id": record.id,
             "view_mode": "form",
+            "views": [(False, "form")],
             "target": "current",
         }
 

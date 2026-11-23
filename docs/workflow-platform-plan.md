@@ -1,6 +1,6 @@
 # 通用工作流平台实施方案
 
-日期：2026-11-23。阶段一至三已实现，核心与可选审批适配器的实际范围和验证见第10、11节及模块 README。下文保留总体设计，阶段四的并行/汇合与执行令牌已交付，见第12节；阶段四其余能力及阶段五仍待实施，不能视为已经可用。
+日期：2026-11-23。阶段一至三已实现，核心与可选审批适配器的实际范围和验证见第10、11节及模块 README。下文保留总体设计，阶段四的并行/汇合与执行令牌已交付，见第12节；阶段五 Project 适配已交付，见第13节；阶段四其余能力仍待实施，不能视为已经可用。
 
 ## 1. 已确认的模块和命名
 
@@ -119,7 +119,7 @@ MVP 人工任务采用明确定义的负责人或当前发起人，候选组/领
 2. **阶段二**：只实现 workflow_core 完整闭环：创建→画布拖拽/属性/连线→保存/刷新→校验/发布→启动→人工任务/顺序/条件→监控/日志；版本不可变、多公司/角色和重复提交必须同阶段完成。先以独立本地库安装核心，证明不需要 OCA/Project。
 3. **阶段三**：实现 workflow_tier_validation、双级审批/拒绝/评论/同步，直接 RPC 和向导加固、动态候选人、并发和重复回调；上游全套测试 + 适配器回归。
 4. **阶段四（进行中）**：并行/汇合与执行令牌已交付；会签/或签、受控退回/撤回、领取/转交、超时、白名单动作及故障恢复继续逐项实现，每项先定义执行语义再显示节点入口。
-5. **阶段五**：workflow_project 关联/创建 Project 任务及状态映射；按原生方法进行操作，验证多负责人、任务取消和双向同步幂等。采购、模具示例用显式 demo/test 数据，不修改业务库。
+5. **阶段五（已实现）**：workflow_project 关联/创建 Project 任务及状态映射、原生流程状态入口、多负责人、任务取消和双向同步幂等。真实采购/模具业务模块仍是后续适配，演示使用显式测试/预览数据，不修改业务库。
 
 每阶段完成代码、适用测试、差异检查和本地 commit；未获授权不推送/合并/部署，不操作生产数据。
 
@@ -217,3 +217,39 @@ MVP 人工任务采用明确定义的负责人或当前发起人，候选组/领
 - 新版并行在途升级：一支已到齐、另一支待办时升级，`.local/workflow-phase4-inflight-upgrade.log`；检查 token/task/join ID及状态保留，继续办理及重试仅生成一个后继，然后正常结束。结果在 `.local/workflow-phase4-inflight-check.log`。
 
 剩余第四阶段能力为会签/或签策略、退回/撤回、领取/转交、超时、白名单动作和持久故障恢复；循环和动态增减分支尚不支持。第五阶段仍为 workflow_project。未推送、合并或部署。
+
+
+## 13. 第五阶段：Project 任务适配
+
+实现 [workflow_project](../workflow_project/README.md)，仅依赖 workflow_core / project。新增节点 project_task，支持创建项目任务或关联本次 project.task 业务记录。核心继续独立于 Project/OCA；审批适配器仍可选。原 OCA submodule 和 Project 上游源码未修改，全部自有实现放 common_addons。
+
+### 契约与边界
+
+- 创建配置为 mode=create、project_id、user_ids；关联配置 mode=business 读取本次实例的原业务任务。没有把固定任务ID嵌入模板，也不自动绑定既有业务数据。
+- workflow.project.link 使用 abt_workflow_project_link，按 node_instance / project.task 分别唯一；负责人快照关系表 abt_workflow_project_user_rel。任务只能绑定一次，已结束记录不可重开或删除，不把 Project 任务作为所有流程待办的唯一模型。
+- 多负责人采用任一人完成。原生状态1_done完成节点并推进，1_canceled取消实例及未完成工作；其余状态保持等待。看板阶段折叠和 Approved 不等于完成。
+- 原生任务状态控件采用 record.update/write，服务端 ProjectTask.write 包含 inverse 和原生业务行为；适配器使用相同路径，以实际操作者权限创建、读取、写入，业务状态不经 sudo 或SQL写入。完成/取消同步、令牌/汇合、后继及审计使用同一 savepoint。
+- 锁顺序 instance → link → project.task；原生状态编辑也先锁再验证，重复请求保留原意见并仅推进一次。内部同步 ContextVar 绑定数据库/游标/linkID，客户端context标记不能绕过权限。
+- Project表单显示实际流程状态并可返回监控；工作流提供“项目待办”、配置/多人选择、打开原生任务和办理面板。取消任务提示将取消整个流程。关联读取/导出同时检查公司、参与人、原业务和Project权限，包括缓存命中；表单可见性按当前用户/公司计算。
+- 在途与历史关联冻结项目、公司、负责人和任务结构；禁止删除和终态重开。初版只支持独立任务，拒绝父子、依赖、循环和模板任务，也阻止从其他普通任务反向添加关系。普通任务保持原生创建/编辑/复制/删除，复制已关联任务得到无绑定的新任务。
+- 流程取消/审批拒绝涉及 Project 任务时，操作者必须仍有原生任务读写权限；不足则整笔回滚，不能以工作流管理员或审批人身份静默提权。
+
+### 验证结果
+
+本地隔离环境，无生产或远端操作：
+
+- codex_workflow_20261123_phase5 首次只安装 workflow_project，未安装 OCA即安装成功；初批13项、扩展后的17项适配测试通过。日志 `.local/workflow-phase5-install.log`、`.local/workflow-phase5-tests1.log`、`.local/workflow-phase5-tests3.log`。
+- 三方共存升级回归 `.local/workflow-phase5-delivery.log`：167项通过，核心39、审批24、Project适配21、OCA83。包含两端竞争完成只推进一次、多人、创建/当前任务绑定、权限/跨公司、重复/终态保护、后继失败回滚、并行及审批拒绝联动。
+- 全新 codex_workflow_20261123_phase5_fresh 安装 workflow_project、workflow_tier_validation、原主题，并增加原生 Project 的 TestTaskState / TestAccessRightsPrivateTask：`.local/workflow-phase5-fresh-delivery.log` 187项、0失败/0错误（前述167 + 原生Project20）。
+- 增加 Project 表单流程状态显示及状态变更后的缓存失效，最终工作流回归 `.local/workflow-phase5-final-workflow.log` 84项、0失败/0错误；最后补建关联时的缓存失效另跑适配器及原生任务状态测试，`.local/workflow-phase5-project-final2.log` 为31项、0失败/0错误。
+- 原生表单跳转曾因 act_window 缺少 views 报错，已给 Project 入口及核心业务入口补齐原生视图描述。最终浏览器专项 `.local/workflow-phase5-final-browser.log` 为3项通过，包含原生Project表单打开、返回工作流、另一负责人完成并生成后继，以及核心端到端/OWL生命周期检查。
+- 发现并修复原生依赖复制使用整数ID列表与常规Command格式不同的问题；结构保护同时支持两种格式。普通Project状态/依赖复制回归覆盖该差异。
+- 升级态原生 TestAccessRightsPrivateTask.test_internal_cannot_crud_private_task 仍有1个失败，不能记为通过。对照库 codex_workflow_20261123_project_baseline 只加载 addons、仅安装Project：首次安装20项全通过，随后 `-u project` 同样1失败/0错误，日志 `.local/workflow-phase5-project-baseline.log` / `...-baseline-upgrade.log`。两库都有自动安装的project_todo及其内部用户可创建任务的ACL；本次未改该上游权限或测试。适配器相关新增错误已消除，原生升级态基线问题单独保留，不代表新模块回归全绿。
+- 核心独立库 codex_workflow_20261123_phase4_core 升级最新workflow_core、无OCA/Project，`.local/workflow-phase5-core-independent.log` 为39项通过。
+- 测试命令统一 local/test、without-demo=all、stop-after-init、no-http、cron=0、独立data-dir；主测试端口8096/8097、核心独立库8100/8101。测试模块范围按上述记录指定，并发测试finally精确清除专属记录，未使用业务数据。
+- `npm test -- --reporter=line` 为8项通过；新增Project配置、多负责人序列化、关联模式及监控打开/办理回调。`npm run build` 可复现，JS/CSS/许可证哈希不变，无新增 npm 依赖。
+- Ruff check / format --check覆盖核心、审批及Project适配；手写源文件最大273行，新适配器文件均低于该值，保留原COM812/formatter提示。
+- 实际原主题1440px/390px设计器与监控，截图 `.local/workflow-phase5-visuals/{designer-desktop.png,designer-mobile.png,monitor-desktop.png,monitor-mobile.png}` 已查看，均无横向溢出或未捕获JS异常；原生任务表单跳转由HttpCase覆盖。
+- 在途升级 `.local/workflow-phase5-inflight-upgrade.log`：保留关联、Project任务、多负责人及冻结版本ID，再完成及重试只创建一次后继，继续人工办理至流程结束。输出 `.local/workflow-phase5-inflight-check.log`。
+
+采购协作使用显式隔离预览数据，不宣称已接入真实采购金额/订单或模具生产模型。后续业务适配与第四阶段剩余会签、退回、超时、恢复等能力独立推进。未推送、合并或部署。

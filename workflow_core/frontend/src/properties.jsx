@@ -3,13 +3,15 @@ import { RuleEditor } from './rule_editor.jsx';
 import { labels, states } from './graph.js';
 import { ApprovalEditor } from './approval_editor.jsx';
 import { ApprovalPanel } from './approval_panel.jsx';
+import { ProjectEditor } from './project_editor.jsx';
+import { ProjectPanel } from './project_panel.jsx';
 
 const events = { started: '流程启动', node_completed: '节点完成', waiting: '等待办理',
     task_completed: '任务完成', completed: '流程完成', cancelled: '流程取消',
     approval_requested: '发起审批', approval_approved: '审批通过', approval_rejected: '审批拒绝',
-    parallel_split: '并行分支启动', join_waiting: '等待分支汇合', parallel_joined: '分支已汇合' };
+    parallel_split: '并行分支启动', join_waiting: '等待分支汇合', parallel_joined: '分支已汇合', project_task_linked: '关联项目任务', project_task_completed: '项目任务完成', project_task_cancelled: '项目任务取消' };
 
-export function Properties({ node, edge, nodes, canvas, assignees, updateNode, updateEdge, remove, complete, decide, busy }) {
+export function Properties({ node, edge, nodes, canvas, assignees, updateNode, updateEdge, remove, complete, decide, decideProject, openProject, busy }) {
     const [comment, setComment] = useState('');
     const editable = canvas.can_edit;
     return <aside className="wf-properties" aria-label="属性面板">
@@ -28,6 +30,8 @@ export function Properties({ node, edge, nodes, canvas, assignees, updateNode, u
             </>}
             {node.type === 'approval' && !canvas.instance_id && canvas.node_options?.approval && <ApprovalEditor config={node.data.config} disabled={!editable}
                 options={canvas.node_options?.approval} change={config => updateNode({ config })} />}
+            {node.type === 'project_task' && !canvas.instance_id && canvas.node_options?.project_task && <ProjectEditor
+                config={node.data.config} options={canvas.node_options.project_task} disabled={!editable} change={config => updateNode({ config })} />}
             {node.type === 'fork' && <>
                 <label className="form-label mt-3" htmlFor="wf-join">汇合节点</label>
                 <select id="wf-join" className="form-select" disabled={!editable} value={node.data.config?.join || ''}
@@ -56,6 +60,7 @@ export function Properties({ node, edge, nodes, canvas, assignees, updateNode, u
         {canvas.instance_id && <section className="wf-tasks">
             {(canvas.approvals || []).map(approval => <ApprovalPanel key={`${approval.id}:${approval.review_id}`}
                 approval={approval} busy={busy} decide={decide} />)}
+            {(canvas.project_tasks || []).map(task => <ProjectPanel key={task.id} task={task} busy={busy} decide={decideProject} open={openProject} />)}
             <h2>任务</h2>
             {(canvas.tasks || []).map((task) => <div className="wf-task" key={task.id}>
                 <strong>{task.name}</strong><div>{task.assignee} · {task.state === 'pending' ? '待办理' : states[task.state]}</div>
