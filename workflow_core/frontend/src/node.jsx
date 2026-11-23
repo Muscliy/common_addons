@@ -19,7 +19,7 @@ export function WorkflowNode({ type, data }) {
             <i className="fa fa-ellipsis-h" aria-hidden="true" />
         </button>}
         <div className="wf-node-kind"><i className={`fa ${icons[type]}`} aria-hidden="true" /> {labels[type]}</div>
-        <strong>{data.label}</strong>
+        <strong title={type === 'condition' ? data.label : undefined}>{data.label}</strong>
         {data.state && <div className="wf-node-state">{type === 'join' && data.state === 'waiting' ? '等待分支' : states[data.state] || data.state}</div>}
     </div>;
 }

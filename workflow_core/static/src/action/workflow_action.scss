@@ -33,11 +33,12 @@
     .wf-properties { border-left: 1px solid var(--wf-border); }
     .wf-palette-node { display: block; width: 100%; text-align: left; margin-bottom: 8px; border: 1px solid var(--wf-border); }
     .wf-canvas { min-width: 0; min-height: 360px; position: relative; }
-    .wf-node { width: 164px; padding: 12px 16px; border: 1px solid var(--wf-border); border-radius: 8px; background: var(--wf-surface); color: var(--wf-text); }
-    .wf-color-blue { background: color-mix(in srgb, var(--wf-brand) 15%, var(--wf-surface)); }
-    .wf-color-green { background: color-mix(in srgb, var(--wf-success) 15%, var(--wf-surface)); }
-    .wf-color-amber { background: color-mix(in srgb, var(--wf-warning) 18%, var(--wf-surface)); }
-    .wf-color-gray { background: color-mix(in srgb, var(--wf-muted) 18%, var(--wf-surface)); }
+    .wf-node { width: 164px; padding: 12px 16px; border: 1px solid var(--wf-border); border-radius: 8px; color: var(--wf-text); }
+    .wf-color-blue { --wf-node-fill: color-mix(in srgb, var(--wf-brand) 15%, var(--wf-surface)); }
+    .wf-color-green { --wf-node-fill: color-mix(in srgb, var(--wf-success) 15%, var(--wf-surface)); }
+    .wf-color-amber { --wf-node-fill: color-mix(in srgb, var(--wf-warning) 18%, var(--wf-surface)); }
+    .wf-color-gray { --wf-node-fill: color-mix(in srgb, var(--wf-muted) 18%, var(--wf-surface)); }
+    .wf-node, .wf-node-swatch { background: var(--wf-node-fill, var(--wf-surface)); }
     .wf-node:has(.wf-node-more) .wf-node-kind { padding-right: 40px; }
     .wf-node .wf-node-more {
         position: absolute;
@@ -117,6 +118,48 @@
     .wf-state-waiting { border-left: 4px solid var(--wf-warning); }
     .wf-state-cancelled { border-left: 4px solid var(--wf-danger); }
     .wf-state-rejected { border-left: 4px solid var(--wf-danger); }
+
+    .wf-node.wf-condition {
+        --wf-condition-outline: var(--wf-muted);
+        position: relative;
+        isolation: isolate;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        box-sizing: border-box;
+        min-height: 96px;
+        padding: 18px 24px;
+        border: 0;
+        background: transparent;
+        text-align: center;
+    }
+    .wf-condition::before, .wf-condition::after {
+        content: "";
+        position: absolute;
+        z-index: -1;
+        pointer-events: none;
+        clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    }
+    .wf-condition::before { inset: 0; background: var(--wf-condition-outline); }
+    .wf-condition::after { inset: 2px 3px; background: var(--wf-node-fill, var(--wf-surface)); }
+    .wf-node.wf-condition .wf-node-kind { margin-bottom: 2px; padding: 0; }
+    .wf-condition strong {
+        display: -webkit-box;
+        max-width: 108px;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+    }
+    .wf-condition .wf-node-state { margin-top: 2px; }
+    .wf-condition.wf-state-done { --wf-condition-outline: var(--wf-success); }
+    .wf-condition.wf-state-waiting { --wf-condition-outline: var(--wf-warning); }
+    .wf-condition.wf-state-cancelled, .wf-condition.wf-state-rejected { --wf-condition-outline: var(--wf-danger); }
+    .selected .wf-node.wf-condition {
+        --wf-condition-outline: var(--wf-brand);
+        outline: 0;
+    }
+    .selected .wf-condition::after { inset: 3px 4px; }
     .wf-node-state { font-size: 12px; margin-top: 8px; }
     .form-label { margin-top: 16px; }
     .wf-rule-editor, .wf-rule-leaf { display: grid; gap: 8px; }

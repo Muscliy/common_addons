@@ -79,9 +79,12 @@ async function remount(page, saved) {
 
 test('node actions edit properties, persist color and remove incident connections', async ({ page }) => {
     const initial = structuredClone(graph);
+    initial.nodes[1].type = 'condition';
+    initial.nodes[1].data.label = '报销金额判断';
     initial.nodes[1].position = { x: 320, y: 260 };
     await mount(page, true, initial);
     const task = page.locator('[data-id="task"]');
+    await expect(task.locator('.wf-condition strong')).toHaveAttribute('title', '报销金额判断');
     await expect(task.locator('.react-flow__handle')).toHaveCount(4);
     await expect(task.locator('.wf-handle-connected')).toHaveCount(0);
     await connect(page, handle(page, 'start', 'bottom'), handle(page, 'task', 'top'));
