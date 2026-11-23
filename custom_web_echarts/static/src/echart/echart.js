@@ -52,13 +52,16 @@ export class EChart extends Component {
                 this.chart?.clear();
                 return;
             }
-            if (!this.chart || this.chartTheme !== this.props.theme) {
+            const theme = this.props.theme || (
+                getComputedStyle(this.container.el).colorScheme === "dark" ? "dark" : ""
+            );
+            if (!this.chart || this.chartTheme !== theme) {
                 this.chart?.dispose();
-                this.chart = globalThis.echarts.init(this.container.el, this.props.theme || undefined);
-                this.chartTheme = this.props.theme;
+                this.chart = globalThis.echarts.init(this.container.el, theme || undefined);
+                this.chartTheme = theme;
                 this.chart.on("click", (event) => this.props.onClick?.(event));
             }
-            this.chart.setOption(this.props.option, { notMerge: true });
+            this.chart.setOption({ backgroundColor: "transparent", ...this.props.option }, { notMerge: true });
             this.chart.resize();
         }, () => [this.state.loadError, this.props.option, this.props.theme]);
 

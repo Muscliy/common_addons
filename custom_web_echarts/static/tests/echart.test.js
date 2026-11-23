@@ -22,6 +22,18 @@ const firstOption = {
     series: [{ type: "bar", data: [3, 7] }],
 };
 
+test("inherits Dark from its surface and keeps the chart background transparent", async () => {
+    class DarkChart extends Component {
+        static components = { EChart };
+        static template = xml`<div style="color-scheme: dark"><EChart option="option"/></div>`;
+        option = firstOption;
+    }
+    await mountWithCleanup(DarkChart);
+    const chart = globalThis.echarts.getInstanceByDom(document.querySelector(".o_custom_echart_canvas"));
+    expect(chart.getOption().darkMode).toBe(true);
+    expect(chart.getOption().backgroundColor).toBe("transparent");
+});
+
 test("loads the vendor bundle on mount and updates the same chart instance", async () => {
     const requestedBundles = [];
     const originalLoadBundle = assets.loadBundle;

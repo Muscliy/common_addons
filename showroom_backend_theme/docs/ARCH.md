@@ -55,7 +55,8 @@ None.
 - 右上角原生 `systray` 的太阳／月亮入口提供 Light 和 Dark，当前选项显示勾选状态，支持键盘操作。
 - 选择写入 Odoo 原生 `color_scheme` Cookie（一年有效、当前浏览器生效），刷新当前地址后加载对应资源；重复选择当前主题不刷新。默认 Light，仅接受 `light` / `dark`。
 - `ir.http.color_scheme()` 扩展保留原生页面资源选择流程。Dark bundle 在所有默认变量前加载 `dark_variables.scss`，原生列表、表单、输入框、下拉菜单和弹窗由同一套深色变量重新编译；公共外壳的 `showroom-color()` 映射和共享看板令牌同时适配，品牌主色保持不变。
-- 主题切换会刷新页面；业务模块自行硬编码的颜色仍需逐页适配。前台、登录页和打印资源不加载深色变量。新增资源及 Python 扩展需要升级模块、重启服务；不得未经授权升级远端数据库。
+- Dark 根节点公开可选的 `--o-theme-surface`、`surface-soft`、`line`、`ink`、`muted`、`link` 及 `success/warning/danger/purple/pink` 的 `bg/text` CSS 令牌。自有业务页面以 `var(--o-theme-…, 原浅色值)` 消费，Light 保留原值，未安装主题时也不增加强制依赖。SVG 直接引用令牌；Canvas 图表须先解析计算颜色，不能把 CSS `var()` 字符串传给 Canvas。
+- 主题切换会刷新页面。前台、登录页和打印资源不加载深色变量。新增资源及 Python 扩展需要升级模块、重启服务；不得未经授权升级远端数据库。
 
 ### Exceed Color API
 

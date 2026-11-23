@@ -17,7 +17,7 @@
 
 1. The small `EChart` Owl wrapper and field widget are registered in `web.assets_backend`. The full browser build is isolated in `custom_web_echarts.echarts_lib`, excluded from the normal backend bundle.
 2. On mount, `EChart` calls Odoo `loadBundle()` and checks that `globalThis.echarts` registered. The Odoo asset loader caches a bundle URL, including concurrent chart loads. A failed load displays an error and logs the underlying exception.
-3. When a non-null option arrives, the wrapper creates an ECharts instance, replaces its option with `notMerge: true`, and responds to container size changes via `ResizeObserver`. A theme change recreates the instance. Unmount disconnects the observer and disposes the chart.
+3. When a non-null option arrives, the wrapper creates an ECharts instance, replaces its option with `notMerge: true`, and responds to container size changes via `ResizeObserver`. An explicit theme takes precedence; otherwise the wrapper inherits the host's CSS `color-scheme` and uses ECharts Dark when needed. Chart backgrounds default to transparent so they follow the business surface; an explicit option background is preserved. A theme change recreates the instance. Unmount disconnects the observer and disposes the chart.
 4. A null option clears the instance and shows an empty message. The form field widget parses JSON strings or accepts objects, rejects arrays/invalid values, and shows an inline error for invalid input.
 
 ## 4. Integration & External APIs
