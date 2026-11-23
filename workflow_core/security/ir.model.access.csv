@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_definition_user,workflow.definition user,model_workflow_definition,group_user,1,0,0,0
+access_definition_designer,workflow.definition designer,model_workflow_definition,group_designer,1,1,1,1
+access_model_designer,ir.model workflow designer,base.model_ir_model,group_designer,1,0,0,0
+access_version_user,workflow.version user,model_workflow_version,group_user,1,0,0,0
+access_node_user,workflow.node user,model_workflow_node,group_user,1,0,0,0
+access_edge_user,workflow.edge user,model_workflow_edge,group_user,1,0,0,0
+access_instance_user,workflow.instance user,model_workflow_instance,group_user,1,0,0,0
+access_activation_user,workflow.node.instance user,model_workflow_node_instance,group_user,1,0,0,0
+access_task_user,workflow.task user,model_workflow_task,group_user,1,0,0,0
+access_log_user,workflow.execution.log user,model_workflow_execution_log,group_user,1,0,0,0

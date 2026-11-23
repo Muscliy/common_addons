@@ -1,0 +1,24 @@
+<templates xml:space="preserve">
+    <t t-name="workflow_core.Action">
+        <div class="o_workflow_action">
+            <header class="o_control_panel wf-toolbar">
+                <div class="wf-heading"><h1 t-esc="state.canvas?.title || '工作流'"/>
+                    <span t-if="state.dirty" class="text-muted">未保存</span>
+                    <span t-if="state.canvas?.instance_state" class="badge text-bg-secondary" t-esc="({running: '进行中', done: '已完成', cancelled: '已取消'})[state.canvas.instance_state]"/>
+                    <span t-elif="state.canvas" class="badge text-bg-secondary" t-esc="state.canvas.state === 'draft' ? '草稿' : '已发布'"/>
+                </div>
+                <div class="wf-actions">
+                    <button t-if="state.canvas?.can_edit" class="btn btn-primary" t-on-click="saveClick" t-att-disabled="state.busy">保存</button>
+                    <button t-if="state.canvas &amp;&amp; !state.canvas.instance_id" class="btn btn-secondary" t-on-click="validateClick" t-att-disabled="state.busy">校验</button>
+                    <button t-if="state.canvas?.can_publish" class="btn btn-primary" t-on-click="publishClick" t-att-disabled="state.busy">发布</button>
+                    <button t-if="state.canvas?.can_start" class="btn btn-primary" t-on-click="startClick" t-att-disabled="state.busy">启动流程</button>
+                    <button t-if="state.canvas?.instance_id &amp;&amp; state.canvas.business_model" class="btn btn-secondary" t-on-click="businessClick" t-att-disabled="state.busy">查看业务单据</button>
+                    <button class="btn btn-secondary" t-on-click="refreshClick" t-att-disabled="state.busy" aria-label="刷新"><i class="fa fa-refresh" aria-hidden="true"/></button>
+                </div>
+            </header>
+            <div t-if="state.error" class="alert alert-danger m-2" role="alert" t-esc="state.error"/>
+            <div t-if="state.busy" class="wf-loading" role="status">正在处理…</div>
+            <div class="wf-react-root" t-ref="canvas"/>
+        </div>
+    </t>
+</templates>

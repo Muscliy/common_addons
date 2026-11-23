@@ -1,6 +1,6 @@
 # 通用工作流平台实施方案
 
-日期：2026-11-23。阶段一已完成源码调研、第三方来源固定、加载配置和隔离安装验证；本文件中的工作流模型、接口与功能为待实施设计，不代表已经安装或可用。
+日期：2026-11-23。阶段一调研与依赖准备已完成；阶段二 `workflow_core` 已实现，实际范围和验证见第10节及模块 README。下文保留总体设计，阶段三至五的模型和功能仍为待实施内容，不能视为已经可用。
 
 ## 1. 已确认的模块和命名
 
@@ -115,7 +115,7 @@ MVP 人工任务采用明确定义的负责人或当前发起人，候选组/领
 
 ## 8. 开发顺序和验收门槛
 
-1. **阶段一（当前）**：核实环境/OCA/React 方案，Git 子模块、加载路径与测试、架构和风险结论；完成本地 commit。
+1. **阶段一（已完成）**：核实环境/OCA/React 方案，Git 子模块、加载路径与测试、架构和风险结论；完成本地 commit。
 2. **阶段二**：只实现 workflow_core 完整闭环：创建→画布拖拽/属性/连线→保存/刷新→校验/发布→启动→人工任务/顺序/条件→监控/日志；版本不可变、多公司/角色和重复提交必须同阶段完成。先以独立本地库安装核心，证明不需要 OCA/Project。
 3. **阶段三**：实现 workflow_tier_validation、双级审批/拒绝/评论/同步，直接 RPC 和向导加固、动态候选人、并发和重复回调；上游全套测试 + 适配器回归。
 4. **阶段四**：逐项提供并行/汇合、会签/或签、受控退回/撤回、领取/转交、超时、白名单动作及故障恢复；每项先定义执行语义再显示节点入口。
@@ -136,3 +136,26 @@ MVP 人工任务采用明确定义的负责人或当前发起人，候选组/领
 - 后续重复 -i 检查已安装模块返回0项测试，不作为额外通过证据。唯一完整测试证据为上述首次安装日志。
 - 上游模块说明在 docutils 渲染时有 RST 缩进警告；安装、资产预编译、测试退出码均成功，未修改上游说明来隐藏告警。
 - 本阶段未运行 Docker 构建，未安装 board/forward/server_action，未验证自研工作流功能、OCA 直接RPC加固或 React/OWL 实际挂载；这些均为后续阶段门槛。
+
+## 10. 阶段二实现与验证
+
+实现位于 [workflow_core](../workflow_core/README.md)。实际持久模型为 definition、version、node、edge、instance、node.instance、task、execution.log；审批、token 和自动动作执行模型尚未创建。模块仅依赖 web/mail，全部新表及两张显式关系表均采用 `abt_workflow_` 前缀。
+
+已实现四类节点、三栏 React Flow 画布及 OWL 生命周期桥接、布局/viewport 保存、revision 冲突保护、类型化 AND/OR 条件编辑、图校验、发布冻结与新版本、启动/顺序/条件流转、人工待办及已办、只读执行图/节点时间/意见历史、关联业务入口、归档/取消、角色分离、公司/参与人/启动组/负责人权限。其他业务模型适配、审批、并行、故障恢复等后续功能在模块 README 明确列出，不显示未实现的节点入口。
+
+源文件按模型、权限/校验/引擎、OWL、React 节点/画布/属性/条件编辑以及测试拆分，最大手写源文件251行。所有状态变更在同一事务完成，不在引擎中提前 commit；通过独立连接测试实际发现并修复了 REPEATABLE READ 下只锁不写仍可读取旧快照的问题。现在通过不改变审计字段值的 UPDATE 产生序列化冲突，再由 Odoo 重试整个 RPC 事务。
+
+实际验证（均在独立本地测试库，无业务库或远端操作）：
+
+- `.venv/bin/python -m ruff check common_addons/workflow_core` 与 `ruff format --check` 通过。项目现有 COM812 与 formatter 的兼容提示仍存在，未关闭规则；最终两项检查均通过。
+- 最终 Odoo 命令沿用第9节测试模式，数据库为 `codex_workflow_20261123_phase2`、模块为 `-u workflow_core --test-tags=/workflow_core`，增加 `YABO_RUNTIME=local YABO_ENV=test`、HTTP 8096/gevent 8097。最终日志 `.local/workflow-phase2-delivery-tests.log`：25项测试、0失败/0错误。
+- 其中一个 HttpCase 完成实际设计→保存→校验→发布→启动→办理→监控；另一个运行3项 HOOT、11断言，覆盖桥接单次挂载/更新/销毁、失败重试、异步加载时销毁后不继续 RPC。HOOT 项包含在 HttpCase 中，不与25重复累计。
+- `npm test -- --reporter=line`：3项 Playwright 测试通过，覆盖真实拖拽/属性/连线/序列化重挂载、只读保护与销毁、键盘新增与删除。
+- 双连接并发启动及办理通过：相同请求键只有一个实例、一个任务、一次完成事件。故意制造的 PostgreSQL serialization 错误属于重试测试预期；不能据日志字面 ERROR 误判为最终测试错误，也不能把失败调用视为成功推进。
+- 同一办理中后继负责人失效导致失败，验证已完成标记、意见、日志和新节点全部回滚，恢复负责人后可重新办理。
+- 最终代码在全新 `codex_workflow_20261123_clean` 空库用 `-i workflow_core` 安装成功；该库未安装 OCA/Project。日志 `.local/workflow-phase2-clean-install.log`。
+- 已保存发布版本、草稿布局、运行实例、待办及历史后执行模块升级，逐项检查仍保留原版本/任务ID、状态、节点坐标和4条历史。另在测试库安装项目原主题，再次完成全部25项回归，主题源码未修改。
+- `npm run build` 可复现，输出 SHA-256 与构建前一致；JS 486,777字节、gzip 158,794字节，CSS 与完整第三方许可证独立提供。npm 安装审计报告0漏洞；不代表未来版本或所有漏洞均已排除。
+- 桌面/390px及实际主题覆盖检查通过：原生菜单打开已保存的条件流程、保存返回新 revision、只读监控不可保存，页面无未捕获 JS 异常。390px 下 document.scrollWidth=390，无横向溢出；选中描边随 `--wf-brand` 从实际主题蓝切到测试色后恢复。实际检查了设计器桌面/窄屏、监控截图，证据为 `.local/workflow-phase2-visuals/{designer-desktop.png,designer-mobile.png,monitor-desktop.png,verification.json}`。
+
+主仓库只更新公共模块提交指针和 Docker context 排除规则，避免把 node_modules、Playwright 输出带入镜像。未构建 Docker 镜像、未推送、未部署；不能据本地验证宣称生产已安装。

@@ -1,0 +1,38 @@
+<odoo>
+    <record id="instance_list" model="ir.ui.view">
+        <field name="name">workflow.instance.list</field><field name="model">workflow.instance</field>
+        <field name="arch" type="xml"><list create="0" delete="0">
+            <field name="name"/><field name="starter_id"/><field name="state" widget="badge"/><field name="create_date"/>
+            <field name="company_id" groups="base.group_multi_company"/>
+            <button name="action_monitor" type="object" string="执行监控" icon="fa-sitemap"/>
+        </list></field>
+    </record>
+    <record id="instance_form" model="ir.ui.view">
+        <field name="name">workflow.instance.form</field><field name="model">workflow.instance</field>
+        <field name="arch" type="xml"><form create="0" edit="0" delete="0">
+            <header><button name="action_monitor" type="object" string="执行监控" class="btn-primary"/>
+                <button name="action_cancel" type="object" string="取消流程" confirm="取消后将关闭未完成的任务，保留执行历史。" invisible="state != 'running'" groups="workflow_core.group_executor"/>
+                <field name="state" widget="statusbar"/></header>
+            <sheet><group><field name="name"/><field name="version_id"/><field name="starter_id"/><field name="create_date"/><field name="finished_at"/></group>
+                <notebook><page string="任务"><field name="task_ids"/></page>
+                    <page string="执行记录"><field name="log_ids"><list create="0" delete="0"><field name="create_date"/><field name="node_id"/><field name="event"/><field name="actor_id"/><field name="comment"/></list></field></page></notebook>
+            </sheet></form></field>
+    </record>
+    <record id="task_list" model="ir.ui.view">
+        <field name="name">workflow.task.list</field><field name="model">workflow.task</field>
+        <field name="arch" type="xml"><list create="0" delete="0">
+            <field name="name"/><field name="instance_id"/><field name="assignee_id"/><field name="state" widget="badge"/><field name="create_date"/>
+            <button name="action_monitor" type="object" string="查看流程"/>
+        </list></field>
+    </record>
+    <record id="task_form" model="ir.ui.view">
+        <field name="name">workflow.task.form</field><field name="model">workflow.task</field>
+        <field name="arch" type="xml"><form create="0" edit="0" delete="0">
+            <header><button name="action_monitor" type="object" string="打开流程办理" class="btn-primary"/><field name="state" widget="statusbar"/></header>
+            <sheet><group><field name="name"/><field name="instance_id"/><field name="assignee_id"/><field name="completed_by"/><field name="completed_at"/><field name="comment"/></group></sheet>
+        </form></field>
+    </record>
+    <record id="instances" model="ir.actions.act_window"><field name="name">流程实例</field><field name="res_model">workflow.instance</field><field name="view_mode">list,form</field></record>
+    <record id="my_pending" model="ir.actions.act_window"><field name="name">我的待办</field><field name="res_model">workflow.task</field><field name="view_mode">list,form</field><field name="domain">[('assignee_id', '=', uid), ('state', '=', 'pending')]</field></record>
+    <record id="my_done" model="ir.actions.act_window"><field name="name">我的已办</field><field name="res_model">workflow.task</field><field name="view_mode">list,form</field><field name="domain">[('assignee_id', '=', uid), ('state', '=', 'done')]</field></record>
+</odoo>

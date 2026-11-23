@@ -1,0 +1,68 @@
+.o_workflow_action {
+    --wf-brand: #{$o-brand-primary};
+    --wf-text: #{$o-main-text-color};
+    --wf-muted: #{$o-main-color-muted};
+    --wf-surface: #{$o-view-background-color};
+    --wf-background: #{$o-gray-100};
+    --wf-border: #{$border-color};
+    --wf-success: #{$o-success};
+    --wf-warning: #{$o-warning};
+    --wf-danger: #{$o-danger};
+    --xy-node-background-color: var(--wf-surface);
+    --xy-node-color: var(--wf-text);
+    --xy-node-border: 1px solid var(--wf-border);
+    --xy-edge-stroke: var(--wf-muted);
+    --xy-handle-background-color: var(--wf-brand);
+    --xy-controls-button-background-color: var(--wf-surface);
+    --xy-controls-button-color: var(--wf-text);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    color: var(--wf-text);
+    background: var(--wf-background);
+
+    .wf-toolbar { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px; }
+    .wf-heading, .wf-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    h1 { font-size: 18px; margin: 0; }
+    h2 { font-size: 15px; font-weight: 600; margin: 0 0 16px; }
+    .wf-react-root { flex: 1; min-height: 0; }
+    .wf-editor { display: grid; grid-template-columns: 160px minmax(0, 1fr) 280px; height: 100%; position: relative; }
+    .wf-library, .wf-properties { background: var(--wf-surface); padding: 20px 16px; overflow-y: auto; }
+    .wf-library { border-right: 1px solid var(--wf-border); }
+    .wf-properties { border-left: 1px solid var(--wf-border); }
+    .wf-palette-node { display: block; width: 100%; text-align: left; margin-bottom: 8px; border: 1px solid var(--wf-border); }
+    .wf-canvas { min-width: 0; min-height: 360px; }
+    .wf-node { width: 164px; padding: 12px 16px; border: 1px solid var(--wf-border); border-radius: 8px; background: var(--wf-surface); color: var(--wf-text); }
+    .wf-node-kind { font-size: 12px; color: var(--wf-muted); margin-bottom: 6px; }
+    .wf-node strong { font-size: 14px; overflow-wrap: anywhere; }
+    .wf-start, .wf-end { border-radius: 24px; }
+    .selected .wf-node { outline: 2px solid var(--wf-brand); outline-offset: 2px; }
+    .wf-state-done { border-left: 4px solid var(--wf-success); }
+    .wf-state-waiting { border-left: 4px solid var(--wf-warning); }
+    .wf-state-cancelled { border-left: 4px solid var(--wf-danger); }
+    .wf-node-state { font-size: 12px; margin-top: 8px; }
+    .form-label { margin-top: 16px; }
+    .wf-rule-editor, .wf-rule-leaf { display: grid; gap: 8px; }
+    .wf-rule-row { display: flex; gap: 4px; align-items: start; }
+    .wf-rule-leaf, .wf-rule-row > .wf-rule-editor { flex: 1; min-width: 0; }
+    .wf-tasks { margin-top: 24px; }
+    .wf-task { padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px solid var(--wf-border); }
+    .wf-log { padding-left: 16px; }
+    .wf-log li { padding: 0 0 16px 4px; }
+    .wf-log span { display: block; font-size: 12px; color: var(--wf-muted); }
+    .wf-loading { padding: 4px 20px; background: var(--wf-surface); }
+    .wf-mobile-tabs { display: none; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--wf-brand); outline-offset: 2px; }
+    button, .form-control, .form-select { min-height: 36px; }
+    @media (max-width: 900px) {
+        .wf-editor { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+        .wf-mobile-tabs { display: flex; gap: 8px; padding: 8px 12px; background: var(--wf-surface); border-bottom: 1px solid var(--wf-border); }
+        .wf-library, .wf-properties { display: none; position: absolute; top: 52px; bottom: 0; z-index: 5; width: 280px; max-width: 85vw; }
+        .wf-panel-nodes .wf-library, .wf-panel-properties .wf-properties { display: block; }
+        .wf-properties { right: 0; }
+        .wf-toolbar { padding: 12px; }
+        .react-flow__minimap { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+}

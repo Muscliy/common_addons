@@ -1,0 +1,148 @@
+import uuid
+
+from odoo import api, fields, models
+from odoo.exceptions import AccessError, UserError, ValidationError
+
+from odoo.addons.workflow_core.services.access import (
+    business_record,
+    lock_record,
+    require_group,
+)
+from odoo.addons.workflow_core.services.engine import start_instance
+
+
+class WorkflowDefinition(models.Model):
+    _name = "workflow.definition"
+    _description = "流程模板"
+    _table = "abt_workflow_definition"
+    _check_company_auto = True
+
+    name = fields.Char(required=True)
+    code = fields.Char(required=True, default=lambda self: uuid.uuid4().hex)
+    company_id = fields.Many2one(
+        "res.company",
+        required=True,
+        default=lambda self: self.env.company,
+    )
+    model_id = fields.Many2one(
+        "ir.model",
+        string="业务模型",
+        domain="[('model', 'in', ['res.partner'])]",
+    )
+    version_ids = fields.One2many("workflow.version", "definition_id")
+    published_version_id = fields.Many2one(
+        "workflow.version",
+        readonly=True,
+        copy=False,
+        ondelete="restrict",
+    )
+    active = fields.Boolean(default=True)
+    starter_group_ids = fields.Many2many(
+        "res.groups",
+        "abt_workflow_starter_group_rel",
+        "definition_id",
+        "group_id",
+        string="允许启动的用户组",
+    )
+    _code_unique = models.Constraint(
+        "UNIQUE(company_id, code)",
+        "同一公司流程编码必须唯一。",
+    )
+
+    def _allowed_business_models(self) -> set[str]:
+        return {"res.partner"}
+
+    @api.constrains("model_id", "company_id")
+    def _check_scope(self):
+        for record in self:
+            if record.company_id not in self.env.companies:
+                raise AccessError(self.env._("不能维护未授权公司的流程。"))
+            if (
+                record.model_id
+                and record.model_id.sudo().model not in self._allowed_business_models()
+            ):
+                raise ValidationError(self.env._("业务模型未注册。"))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        require_group(self, "group_designer")
+        if any("published_version_id" in vals for vals in vals_list):
+            raise AccessError(self.env._("不能直接指定已发布版本。"))
+        # 显式赋值覆盖 context default, 防止绕过公开 create 的版本保护。
+        records = super().create(
+            [dict(vals, published_version_id=False) for vals in vals_list],
+        )
+        for record in records:
+            self.env["workflow.version"].sudo().create(
+                {"definition_id": record.id, "number": 1},
+            )
+        return records
+
+    def write(self, vals):
+        require_group(self, "group_designer")
+        if "published_version_id" in vals:
+            raise AccessError(self.env._("请通过发布操作切换有效版本。"))
+        if {"model_id", "company_id"} & vals.keys() and any(
+            record.version_ids.filtered(lambda v: v.state == "published")
+            for record in self
+        ):
+            raise UserError(self.env._("已有发布版本, 不能更改业务模型或公司。"))
+        return super().write(vals)
+
+    def unlink(self):
+        if self.mapped("version_ids").filtered(lambda v: v.state == "published"):
+            raise UserError(self.env._("已有发布版本的流程不能删除, 请归档。"))
+        return super().unlink()
+
+    def _set_published_version(self, version) -> None:
+        super(WorkflowDefinition, self.sudo()).write(
+            {"published_version_id": version.id},
+        )
+
+    def action_designer(self) -> dict:
+        self.ensure_one()
+        self.check_access("read")
+        version = self.version_ids.sorted("number", reverse=True)[:1]
+        return version.action_designer()
+
+    def action_new_version(self) -> dict:
+        self.ensure_one()
+        self.check_access("write")
+        require_group(self, "group_designer")
+        with self.env.cr.savepoint():
+            lock_record(self)
+            latest = self.version_ids.sorted("number", reverse=True)[:1]
+            if latest.state == "draft":
+                return latest.action_designer()
+            version = (
+                self.env["workflow.version"]
+                .sudo()
+                .create(
+                    {
+                        "definition_id": self.id,
+                        "number": latest.number + 1,
+                    },
+                )
+                .with_env(self.env)
+            )
+            version.save_graph(latest.get_canvas()["graph"], 0)
+            return version.action_designer()
+
+    def action_start(self, res_id: int = 0, request_key: str = "") -> dict:
+        self.ensure_one()
+        self.check_access("read")
+        require_group(self, "group_executor")
+        if self.starter_group_ids and not (
+            self.starter_group_ids & self.env.user.all_group_ids
+        ):
+            raise AccessError(self.env._("你不属于此流程允许启动的用户组。"))
+        if not isinstance(request_key, str) or len(request_key) > 100:
+            raise ValidationError(self.env._("请求标识格式不正确。"))
+        key = request_key or uuid.uuid4().hex
+        with self.env.cr.savepoint():
+            lock_record(self)
+            if not self.active or not self.published_version_id:
+                raise UserError(self.env._("流程尚未发布或已停用。"))
+            record = business_record(self, res_id)
+            instance = start_instance(self, record, key)
+            return instance.with_env(self.env).action_monitor()
