@@ -5,6 +5,7 @@ import { nodeTypes } from './node.jsx';
 import { Properties } from './properties.jsx';
 import { NodeActions } from './node_actions.jsx';
 import { conditionLabel } from './condition_label.js';
+import { monitorPositions } from './monitor_layout.js';
 import { approvalDirectory, nodeReviewers } from './node_reviewers.jsx';
 import { connectedSides, defaultHandles, exampleGraph, labels, serialise } from './graph.js';
 
@@ -61,9 +62,11 @@ function Canvas({ canvas, assignees = [], onChange, onReady, onComplete, onDecis
         return { ...defaultHandles, ...edge, label, ariaLabel: text || undefined };
     });
     const connected = connectedSides(displayEdges);
+    const monitorLayout = canvas.instance_id ? monitorPositions(nodes, displayEdges) : null;
     const directory = approvalDirectory(canvas.approval_labels, canvas.node_options?.approval);
     const approvals = new Map((canvas.approvals || []).map(approval => [approval.node, approval]));
-    const displayNodes = nodes.map((node) => ({ ...node, data: { ...node.data,
+    const displayNodes = nodes.map((node) => ({ ...node,
+        position: monitorLayout?.get(node.id) || node.position, data: { ...node.data,
         state: executions[node.id]?.state, execution: executions[node.id],
         connectedSides: connected.get(node.id),
         reviewers: node.type === 'approval' ? nodeReviewers(node, directory, approvals.get(node.id)) : [],
@@ -84,7 +87,9 @@ function Canvas({ canvas, assignees = [], onChange, onReady, onComplete, onDecis
         if (selection?.kind === kind && selection.id === id) setSelection(null);
         closeActions();
     };
-    return <div className={`wf-editor wf-panel-${panel}`}>
+    const classes = ['wf-editor', `wf-panel-${panel}`];
+    if (canvas.instance_id) classes.push('wf-monitor');
+    return <div className={classes.join(' ')}>
         <nav className="wf-mobile-tabs" aria-label="编辑面板">
             <button className="btn btn-secondary" aria-pressed={panel === 'nodes'} onClick={() => setPanel(panel === 'nodes' ? 'canvas' : 'nodes')}>节点库</button>
             <button className="btn btn-secondary" aria-pressed={panel === 'properties'} onClick={() => setPanel(panel === 'properties' ? 'canvas' : 'properties')}>属性</button>
