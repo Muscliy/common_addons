@@ -8,9 +8,8 @@ from odoo import api
 from odoo.orm.environments import Transaction
 from odoo.sql_db import db_connect
 from odoo.tests import TransactionCase, tagged
-from odoo.tools import SQL
 
-from .common import sequential
+from .common import purge_workflow, sequential
 
 
 @tagged("post_install", "-at_install")
@@ -101,42 +100,5 @@ class TestConcurrency(TransactionCase):
         finally:
             # 只清除本测试自己提交的记录, 保留普通用户不可删除审计的契约。
             with db_connect(self.cr.dbname).cursor() as cr:
-                for table in (
-                    "abt_workflow_execution_log",
-                    "abt_workflow_task",
-                    "abt_workflow_node_instance",
-                ):
-                    cr.execute(
-                        SQL(
-                            "DELETE FROM %s WHERE instance_id IN "
-                            "(SELECT id FROM abt_workflow_instance WHERE definition_id = %s)",
-                            SQL.identifier(table),
-                            definition_id,
-                        ),
-                    )
-                cr.execute(
-                    "DELETE FROM abt_workflow_instance WHERE definition_id = %s",
-                    [definition_id],
-                )
-                cr.execute(
-                    "UPDATE abt_workflow_definition SET published_version_id = NULL WHERE id = %s",
-                    [definition_id],
-                )
-                for table in ("abt_workflow_edge", "abt_workflow_node"):
-                    cr.execute(
-                        SQL(
-                            "DELETE FROM %s WHERE version_id IN "
-                            "(SELECT id FROM abt_workflow_version WHERE definition_id = %s)",
-                            SQL.identifier(table),
-                            definition_id,
-                        ),
-                    )
-                cr.execute(
-                    "DELETE FROM abt_workflow_version WHERE definition_id = %s",
-                    [definition_id],
-                )
-                cr.execute(
-                    "DELETE FROM abt_workflow_definition WHERE id = %s",
-                    [definition_id],
-                )
+                purge_workflow(cr, definition_id)
                 cr.commit()

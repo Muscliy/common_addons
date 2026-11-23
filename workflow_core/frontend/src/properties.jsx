@@ -6,7 +6,8 @@ import { ApprovalPanel } from './approval_panel.jsx';
 
 const events = { started: '流程启动', node_completed: '节点完成', waiting: '等待办理',
     task_completed: '任务完成', completed: '流程完成', cancelled: '流程取消',
-    approval_requested: '发起审批', approval_approved: '审批通过', approval_rejected: '审批拒绝' };
+    approval_requested: '发起审批', approval_approved: '审批通过', approval_rejected: '审批拒绝',
+    parallel_split: '并行分支启动', join_waiting: '等待分支汇合', parallel_joined: '分支已汇合' };
 
 export function Properties({ node, edge, nodes, canvas, assignees, updateNode, updateEdge, remove, complete, decide, busy }) {
     const [comment, setComment] = useState('');
@@ -27,7 +28,15 @@ export function Properties({ node, edge, nodes, canvas, assignees, updateNode, u
             </>}
             {node.type === 'approval' && !canvas.instance_id && canvas.node_options?.approval && <ApprovalEditor config={node.data.config} disabled={!editable}
                 options={canvas.node_options?.approval} change={config => updateNode({ config })} />}
-            {node.data.state && <p className="mt-3">{states[node.data.state]}</p>}
+            {node.type === 'fork' && <>
+                <label className="form-label mt-3" htmlFor="wf-join">汇合节点</label>
+                <select id="wf-join" className="form-select" disabled={!editable} value={node.data.config?.join || ''}
+                    onChange={e => updateNode({ config: { join: e.target.value } })}>
+                    <option value="">请选择</option>
+                    {nodes.filter(n => n.type === 'join').map(n => <option key={n.id} value={n.id}>{n.data.label}</option>)}
+                </select>
+            </>}
+            {node.data.state && <p className="mt-3">{node.type === 'join' && node.data.state === 'waiting' ? '等待分支' : states[node.data.state]}</p>}
             {node.data.execution && <dl>
                 <dt>开始时间</dt><dd>{node.data.execution.started_at}</dd>
                 <dt>完成时间</dt><dd>{node.data.execution.finished_at || '—'}</dd>

@@ -128,6 +128,7 @@ class TestRuntime(WorkflowCase):
             "node.instance",
             "task",
             "execution.log",
+            "token",
         ):
             self.assertTrue(
                 self.env[f"workflow.{name}"]._table.startswith("abt_workflow_"),

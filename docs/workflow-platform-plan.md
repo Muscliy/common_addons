@@ -1,6 +1,6 @@
 # 通用工作流平台实施方案
 
-日期：2026-11-23。阶段一至三已实现，核心与可选审批适配器的实际范围和验证见第10、11节及模块 README。下文保留总体设计，阶段四、五仍为待实施内容，不能视为已经可用。
+日期：2026-11-23。阶段一至三已实现，核心与可选审批适配器的实际范围和验证见第10、11节及模块 README。下文保留总体设计，阶段四的并行/汇合与执行令牌已交付，见第12节；阶段四其余能力及阶段五仍待实施，不能视为已经可用。
 
 ## 1. 已确认的模块和命名
 
@@ -118,7 +118,7 @@ MVP 人工任务采用明确定义的负责人或当前发起人，候选组/领
 1. **阶段一（已完成）**：核实环境/OCA/React 方案，Git 子模块、加载路径与测试、架构和风险结论；完成本地 commit。
 2. **阶段二**：只实现 workflow_core 完整闭环：创建→画布拖拽/属性/连线→保存/刷新→校验/发布→启动→人工任务/顺序/条件→监控/日志；版本不可变、多公司/角色和重复提交必须同阶段完成。先以独立本地库安装核心，证明不需要 OCA/Project。
 3. **阶段三**：实现 workflow_tier_validation、双级审批/拒绝/评论/同步，直接 RPC 和向导加固、动态候选人、并发和重复回调；上游全套测试 + 适配器回归。
-4. **阶段四**：逐项提供并行/汇合、会签/或签、受控退回/撤回、领取/转交、超时、白名单动作及故障恢复；每项先定义执行语义再显示节点入口。
+4. **阶段四（进行中）**：并行/汇合与执行令牌已交付；会签/或签、受控退回/撤回、领取/转交、超时、白名单动作及故障恢复继续逐项实现，每项先定义执行语义再显示节点入口。
 5. **阶段五**：workflow_project 关联/创建 Project 任务及状态映射；按原生方法进行操作，验证多负责人、任务取消和双向同步幂等。采购、模具示例用显式 demo/test 数据，不修改业务库。
 
 每阶段完成代码、适用测试、差异检查和本地 commit；未获授权不推送/合并/部署，不操作生产数据。
@@ -183,3 +183,37 @@ MVP 人工任务采用明确定义的负责人或当前发起人，候选组/领
 - 在途升级：独立 phase3 库保存第一审批人已通过、第二人待处理的实例后升级。检查确认发布版本ID、审批单ID、review ID/状态/意见、运行状态及没有后继任务全部保留。日志 `.local/workflow-phase3-upgrade.log` 与 `.local/workflow-phase3-upgrade-check.log`。
 
 曾发现并修复缓存命中的读取检查缺口，以及上游 at_install 测试阶段部分 registry 与持久规则字段不匹配的问题。OCA 原生测试有对所有 tier.definition 的无条件写入；带持久审批快照的预览库会按审计契约拒绝这种写入，因此完整上游回归使用干净隔离库，未放宽快照保护或修改上游测试。早期失败日志不作为通过证据。
+
+
+## 12. 阶段四第一项：结构化并行与执行令牌
+
+本次交付范围为并行分支/全部汇合及其运行基础，未宣称完成整个第四阶段。没有新增 Odoo 模块、生产依赖或第三方源码修改；仍在现有 workflow_core 和 workflow_tier_validation 中扩展。
+
+### 执行语义与职责
+
+- 核心新增 fork / join 节点，fork.config 为 `{"join": "配对汇合key"}`。发布时按 DAG 拓扑顺序传播 fork/分支栈，检查唯一配对、完整嵌套、全部出口归并、跨分支串线、提前结束及重复出口。原有条件选择仍只走一条路径。
+- 新增 workflow.token（表 abt_workflow_token），保存实例+唯一key、当前节点/状态、父令牌、fork激活和分支出线。workflow.node.instance.token_id 可空，保留原实例+节点唯一约束；当前仍拒绝循环和重复激活。
+- 引擎使用有界队列推进自动节点；fork 一次创建全部子令牌并激活各分支。父令牌等待，分支到达配对 join 后置为 joined；按父令牌+fork激活检查全部兄弟到齐，再恢复父令牌并推进一次。嵌套和连续并行不共享汇合范围，分支内条件和空分支均受支持。
+- services/engine.py 管理推进；services/parallel.py 管理根令牌、分支与汇合；services/parallel_validation.py 校验区域；models/token.py 管理令牌字段、范围约束和运行记录写保护。并行细节集中在这些文件，任务和审批继续使用原 advance 入口。
+- 启动/办理的原 savepoint 覆盖全部分支及后继创建。最后分支到齐后若后继负责人失效，办理状态、意见、令牌、汇合、日志全部回滚。实例 MVCC 更新锁让同时到达的 RPC 按整个事务重试，最终只有一个汇合和后继。
+- 核心 `_close_open_work` 统一取消未完成任务/节点/令牌；审批适配器在同一事务关闭其他 pending 审批及其 reviews。拒绝只把本审批/激活标为 rejected，其余未完成工作取消，已办历史保留。
+- 令牌沿用运行模型的只读写保护，使用全局公司/参与人规则。直接 create/write/unlink/copy、伪造 context 不授予运行写权限；新增测试同时检查跨公司管理员不能读令牌。
+- 老版本和老在途记录不回填、不重建。无 token_id 的历史待办首次继续办理时补建唯一根令牌，再按冻结版本推进；历史版本、任务、审批ID及意见保留。
+
+### 实际验证
+
+全部使用本地隔离库，未连接业务库或远端：
+
+- `.local/workflow-phase4-parallel1.log`：首批8项并行行为/回滚/权限/兼容测试通过；扩大回归后的 `.local/workflow-phase4-regression1.log` 为60项通过。
+- `.local/workflow-phase4-concurrency-browser.log`：真实双连接同时完成左右分支，只产生一个后继/汇合事件；实际两用户浏览器办理左右分支及后继，看到等待分支→汇合完成→实例结束。2项通过。
+- `.local/workflow-phase4-delivery.log`：带现有主题，`-u base_tier_validation,workflow_core,workflow_tier_validation --test-tags=/base_tier_validation,/workflow_core,/workflow_tier_validation`，145项、0失败/0错误。其中核心38、适配器24、OCA83项。
+- 随后增加 context defaults 启动安全回归和令牌跨公司断言，最终 `.local/workflow-phase4-final-workflow.log` 为63项、0失败/0错误（核心39、适配器24）。上游源码及普通 OCA 行为没有后续修改，复用前述83项证据；不把多次运行重复累计为新测试数量。
+- `.local/workflow-phase4-core-install.log`：全新 codex_workflow_20261123_phase4_core 库 `-i workflow_core --addons-path=addons,common_addons`，38项通过；SQL确认 base_tier_validation / workflow_tier_validation / project 均未安装。该次全新安装早于新增的 context defaults 测试，该新增测试另有 `.local/workflow-phase4-defaults-before.log` 的1项通过及最终核心39项回归覆盖。
+- 测试参数沿用 local/test、db_user=leehu、without-demo=all、stop-after-init、no-http、cron=0；delivery库端口8096/8097、core库8100/8101，分别独立 data-dir。预期 serialization 日志是并发重试证据，最终结果以 tests.result 为准。
+- `npm test -- --reporter=line`：6项 Playwright 通过，新增 fork 配对选择/序列化、监控禁改和“等待分支”展示。`npm run build` 可复现，JS/CSS/许可证重建哈希一致。
+- `.venv/bin/ruff check` 与 `ruff format --check` 检查核心及适配器；项目 COM812/formatter 提示保持原样。手写源文件最大272行，未引入巨型引擎文件。
+- 实际主题下原生模板/实例菜单打开设计器及监控，检查1440px和390px，手机无横向溢出、控制台无未捕获异常。截图 `.local/workflow-phase4-visuals/{designer-desktop.png,designer-mobile.png,monitor-desktop.png,monitor-mobile.png}` 已逐一查看；配对选择、待办办理及汇合等待正常。设计器 fitView 修改的是未保存测试草稿视口。
+- 老版在途审批升级：`.local/workflow-phase4-legacy-upgrade.log`，检查原 review ID/状态/意见和冻结版本未变，再完成第二级审批，补建一个根令牌，办理后继并结束。结果在 `.local/workflow-phase4-legacy-check.log`。
+- 新版并行在途升级：一支已到齐、另一支待办时升级，`.local/workflow-phase4-inflight-upgrade.log`；检查 token/task/join ID及状态保留，继续办理及重试仅生成一个后继，然后正常结束。结果在 `.local/workflow-phase4-inflight-check.log`。
+
+剩余第四阶段能力为会签/或签策略、退回/撤回、领取/转交、超时、白名单动作和持久故障恢复；循环和动态增减分支尚不支持。第五阶段仍为 workflow_project。未推送、合并或部署。

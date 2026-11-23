@@ -4,6 +4,7 @@ from collections import deque
 
 from odoo.exceptions import ValidationError
 
+from .parallel_validation import validate_parallel
 from .rules import validate_rule
 
 NODE_TYPES = [
@@ -11,6 +12,8 @@ NODE_TYPES = [
     ("end", "结束"),
     ("task", "人工任务"),
     ("condition", "条件分支"),
+    ("fork", "并行分支"),
+    ("join", "并行汇合"),
 ]
 KEY = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
@@ -150,16 +153,21 @@ def validate_graph(graph: dict, fields: dict, node_types=None) -> None:
                     validate_rule(edge["data"]["rule"], fields)
         else:
             expected = 0 if node["type"] == "end" else 1
-            if len(exits) != expected or any(
+            valid_count = (
+                len(exits) >= 2 if node["type"] == "fork" else len(exits) == expected
+            )
+            if not valid_count or any(
                 e["data"]["rule"] or e["data"]["default"] for e in exits
             ):
-                message = "开始和任务节点需一个普通出口, 结束节点不能有出口。"
+                message = (
+                    "并行分支需至少两个普通出口，结束节点无出口，其他节点需一个出口。"
+                )
                 raise ValidationError(message)
-    # Kahn 排序同时验证不可达节点与环。首版不接受循环或并行。
-    queue, visited = deque([starts[0]]), set()
+    # Kahn 排序验证不可达节点与环, 再校验并行区域的词法嵌套。
+    queue, visited = deque([starts[0]]), []
     while queue:
         key = queue.popleft()
-        visited.add(key)
+        visited.append(key)
         for edge in outgoing[key]:
             target = edge["target"]
             incoming[target] -= 1
@@ -168,3 +176,5 @@ def validate_graph(graph: dict, fields: dict, node_types=None) -> None:
     if len(visited) != len(nodes):
         message = "流程存在循环或不可达节点。"
         raise ValidationError(message)
+
+    validate_parallel(graph, visited)

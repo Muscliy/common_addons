@@ -1,4 +1,12 @@
 <odoo>
+    <record id="token_company" model="ir.rule">
+        <field name="name">Workflow token: companies</field><field name="model_id" ref="model_workflow_token"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="token_participant" model="ir.rule">
+        <field name="name">Workflow token: participants</field><field name="model_id" ref="model_workflow_token"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('workflow_core.group_viewer') else [('instance_id.participant_ids', 'in', [user.id])]</field>
+    </record>
     <record id="definition_company" model="ir.rule">
         <field name="name">Workflow definition: companies</field>
         <field name="model_id" ref="model_workflow_definition" />
