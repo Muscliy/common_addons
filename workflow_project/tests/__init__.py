@@ -1,4 +1,5 @@
 from . import (
+    test_acceptance_examples,
     test_approval,
     test_browser,
     test_concurrency,

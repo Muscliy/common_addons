@@ -21,10 +21,18 @@
                     <field name="active" invisible="1"/>
                     <group><field name="name"/><field name="code"/><field name="model_id" groups="workflow_core.group_designer" options="{'no_create': True}"/>
                         <field name="starter_group_ids" widget="many2many_tags" groups="workflow_core.group_designer" options="{'no_create': True}"/>
-                        <field name="company_id" groups="base.group_multi_company"/><field name="published_version_id"/></group>
+                        <field name="company_id" groups="base.group_multi_company"/><field name="published_version_id"/>
+                        <field name="version_activated_by" string="最近启用人" invisible="not version_activated_by"/>
+                        <field name="version_activated_at" string="最近启用时间" invisible="not version_activated_at"/>
+                    </group>
                     <field name="version_ids" readonly="1">
                         <list create="0" delete="0"><field name="number"/><field name="state"/><field name="published_by"/><field name="published_at"/>
-                            <button name="action_designer" type="object" string="查看版本"/></list>
+                            <field name="is_current" string="当前版本"/>
+                            <button name="action_designer" type="object" string="查看版本"/>
+                            <button name="action_restore" type="object" string="启用此版本" groups="workflow_core.group_publisher"
+                                invisible="state != 'published' or is_current"
+                                confirm="新启动的流程将使用所选版本。已启动的流程继续使用原版本。"/>
+                        </list>
                     </field>
                 </sheet>
             </form>
