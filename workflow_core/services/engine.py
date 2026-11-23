@@ -7,7 +7,7 @@ from .parallel import activation_token, arrive, root_token, split
 from .rules import evaluate_rule
 
 
-def start_instance(definition, record, request_key: str):
+def start_instance(definition, record, request_key: str, expected_version_id: int = 0):
     env = definition.env
     instances = env["workflow.instance"].sudo()
     existing = instances.search(
@@ -24,6 +24,8 @@ def start_instance(definition, record, request_key: str):
             raise UserError(env._("同一请求标识不能用于不同业务记录。"))
         return existing
     version = definition.published_version_id
+    if expected_version_id and version.id != expected_version_id:
+        raise UserError(env._("当前发布版本已切换，请重新打开流程模板后启动。"))
     instance = instances.create(
         {
             "name": f"{definition.name} / V{version.number}",

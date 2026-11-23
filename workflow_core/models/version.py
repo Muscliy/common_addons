@@ -43,6 +43,7 @@ class WorkflowVersion(models.Model):
     edge_ids = fields.One2many("workflow.edge", "version_id")
     published_by = fields.Many2one("res.users", readonly=True)
     published_at = fields.Datetime(readonly=True)
+    is_current = fields.Boolean(compute="_compute_is_current")
     _number_unique = models.Constraint(
         "UNIQUE(definition_id, number)",
         "流程版本号必须唯一。",
@@ -52,6 +53,25 @@ class WorkflowVersion(models.Model):
     def _compute_display_name(self):
         for version in self:
             version.display_name = f"{version.definition_id.name} / V{version.number}"
+
+    @api.depends("definition_id.published_version_id")
+    def _compute_is_current(self):
+        for version in self:
+            version.is_current = version.definition_id.published_version_id == version
+
+    def action_restore(self) -> bool:
+        self.ensure_one()
+        self.check_access("read")
+        require_group(self, "group_publisher")
+        with self.env.cr.savepoint():
+            definition = self.definition_id
+            lock_record(definition)
+            if self.state != "published":
+                raise UserError(self.env._("只能启用已发布版本。"))
+            if definition.published_version_id != self:
+                self.action_validate()
+                definition._set_published_version(self)
+        return True
 
     @api.model_create_multi
     def create(self, vals_list):

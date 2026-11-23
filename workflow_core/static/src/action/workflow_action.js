@@ -111,7 +111,7 @@ export class WorkflowAction extends Component {
     async start(resId = 0) {
         await this.perform(async () => {
             const result = await this.orm.call("workflow.definition", "action_start", [
-                [this.state.canvas.definition_id], resId, this.requestKey,
+                [this.state.canvas.definition_id], resId, this.requestKey, this.state.canvas.id,
             ]);
             if (this.alive) await this.action.doAction(result);
         });

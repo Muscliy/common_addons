@@ -36,6 +36,8 @@ class WorkflowDefinition(models.Model):
         copy=False,
         ondelete="restrict",
     )
+    version_activated_by = fields.Many2one("res.users", readonly=True, copy=False)
+    version_activated_at = fields.Datetime(readonly=True, copy=False)
     active = fields.Boolean(default=True)
     starter_group_ids = fields.Many2many(
         "res.groups",
@@ -66,11 +68,14 @@ class WorkflowDefinition(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         require_group(self, "group_designer")
-        if any("published_version_id" in vals for vals in vals_list):
+        if any(self._activation_fields() & vals.keys() for vals in vals_list):
             raise AccessError(self.env._("不能直接指定已发布版本。"))
         # 显式赋值覆盖 context default, 防止绕过公开 create 的版本保护。
         records = super().create(
-            [dict(vals, published_version_id=False) for vals in vals_list],
+            [
+                dict(vals, **dict.fromkeys(self._activation_fields(), False))
+                for vals in vals_list
+            ],
         )
         for record in records:
             self.env["workflow.version"].sudo().create(
@@ -80,7 +85,7 @@ class WorkflowDefinition(models.Model):
 
     def write(self, vals):
         require_group(self, "group_designer")
-        if "published_version_id" in vals:
+        if self._activation_fields() & vals.keys():
             raise AccessError(self.env._("请通过发布操作切换有效版本。"))
         if {"model_id", "company_id"} & vals.keys() and any(
             record.version_ids.filtered(lambda v: v.state == "published")
@@ -94,15 +99,24 @@ class WorkflowDefinition(models.Model):
             raise UserError(self.env._("已有发布版本的流程不能删除, 请归档。"))
         return super().unlink()
 
+    def _activation_fields(self) -> set[str]:
+        return {"published_version_id", "version_activated_by", "version_activated_at"}
+
     def _set_published_version(self, version) -> None:
         super(WorkflowDefinition, self.sudo()).write(
-            {"published_version_id": version.id},
+            {
+                "published_version_id": version.id,
+                "version_activated_by": self.env.uid,
+                "version_activated_at": fields.Datetime.now(),
+            },
         )
 
     def action_designer(self) -> dict:
         self.ensure_one()
         self.check_access("read")
         version = self.version_ids.sorted("number", reverse=True)[:1]
+        if version.state == "published":
+            version = self.published_version_id or version
         return version.action_designer()
 
     def action_new_version(self) -> dict:
@@ -125,10 +139,16 @@ class WorkflowDefinition(models.Model):
                 )
                 .with_env(self.env)
             )
-            version.save_graph(latest.get_canvas()["graph"], 0)
+            source = self.published_version_id or latest
+            version.save_graph(source.get_canvas()["graph"], 0)
             return version.action_designer()
 
-    def action_start(self, res_id: int = 0, request_key: str = "") -> dict:
+    def action_start(
+        self,
+        res_id: int = 0,
+        request_key: str = "",
+        expected_version_id: int = 0,
+    ) -> dict:
         self.ensure_one()
         self.check_access("read")
         require_group(self, "group_executor")
@@ -138,11 +158,13 @@ class WorkflowDefinition(models.Model):
             raise AccessError(self.env._("你不属于此流程允许启动的用户组。"))
         if not isinstance(request_key, str) or len(request_key) > 100:
             raise ValidationError(self.env._("请求标识格式不正确。"))
+        if type(expected_version_id) is not int or expected_version_id < 0:
+            raise ValidationError(self.env._("流程版本标识不正确。"))
         key = request_key or uuid.uuid4().hex
         with self.env.cr.savepoint():
             lock_record(self)
             if not self.active or not self.published_version_id:
                 raise UserError(self.env._("流程尚未发布或已停用。"))
             record = business_record(self, res_id)
-            instance = start_instance(self, record, key)
+            instance = start_instance(self, record, key, expected_version_id)
             return instance.with_env(self.env).action_monitor()
