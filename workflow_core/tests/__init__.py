@@ -8,5 +8,6 @@ from . import (
     test_parallel_concurrency,
     test_runtime,
     test_security,
+    test_start_wizard,
     test_version_restore,
 )

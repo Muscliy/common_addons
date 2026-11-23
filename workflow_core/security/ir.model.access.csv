@@ -10,3 +10,4 @@ access_activation_user,workflow.node.instance user,model_workflow_node_instance,
 access_task_user,workflow.task user,model_workflow_task,group_user,1,0,0,0
 access_log_user,workflow.execution.log user,model_workflow_execution_log,group_user,1,0,0,0
 access_token_user,workflow.token user,model_workflow_token,group_user,1,0,0,0
+access_workflow_start_executor,workflow.start.wizard executor,model_workflow_start_wizard,group_executor,1,1,1,1

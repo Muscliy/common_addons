@@ -4,7 +4,6 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
-import { SelectCreateDialog } from "@web/views/view_dialogs/select_create_dialog";
 import { useSetupAction } from "@web/search/action_hook";
 
 import { WorkflowRuntime } from "./workflow_runtime";
@@ -29,7 +28,6 @@ export class WorkflowAction extends Component {
         this.state = useState({ canvas: null, error: "", busy: false, dirty: false, graphVisible: false });
         this.alive = true;
         this.assignees = [];
-        this.requestKey = crypto.randomUUID();
         const params = this.props.action.params || {};
         const recordParam = this.constructor.recordParam;
         this.params = {
@@ -127,20 +125,13 @@ export class WorkflowAction extends Component {
         });
     }
 
-    async start(resId = 0) {
-        await this.perform(async () => {
-            const result = await this.orm.call("workflow.definition", "action_start", [
-                [this.state.canvas.definition_id], resId, this.requestKey, this.state.canvas.id,
-            ]);
-            if (this.alive) await this.action.doAction(result);
-        });
-    }
-
     startClick() {
-        if (!this.state.canvas.business_model) return this.start();
-        this.dialog.add(SelectCreateDialog, {
-            title: _t("选择业务记录"), resModel: this.state.canvas.business_model,
-            noCreate: true, multiSelect: false, onSelected: (ids) => this.start(ids[0]),
+        return this.perform(async () => {
+            const canvas = this.state.canvas;
+            const action = await this.orm.call("workflow.start.wizard", "action_open", [
+                canvas.definition_id, canvas.id,
+            ]);
+            if (this.alive) await this.action.doAction(action);
         });
     }
 
