@@ -29,6 +29,25 @@ class TestGraph(WorkflowCase):
         self.assertEqual(version.get_canvas()["graph"], graph)
         self.assertEqual(version.revision, 1)
 
+    def test_node_background_and_connection_sides_survive_publish_and_copy(self):
+        version = self.definition().version_ids
+        graph = sequential()
+        graph["nodes"][1]["data"]["background_color"] = "green"
+        graph["edges"][0].update(sourceHandle="bottom", targetHandle="top")
+        graph["edges"][1].update(sourceHandle="left", targetHandle="right")
+        version.save_graph(graph, 0)
+        self.env.invalidate_all()
+        self.assertEqual(version.get_canvas()["graph"], graph)
+        version.action_publish(1)
+        self.assertEqual(version.get_canvas()["graph"], graph)
+        action = version.definition_id.action_new_version()
+        draft = (
+            self.env["workflow.version"]
+            .browse(action["params"]["version_id"])
+            .with_user(self.manager)
+        )
+        self.assertEqual(draft.get_canvas()["graph"], graph)
+
     def test_invalid_payloads_never_replace_existing_graph(self):
         version = self.definition().version_ids
         graph = sequential()
@@ -38,7 +57,10 @@ class TestGraph(WorkflowCase):
             lambda g: g["nodes"][0].update(type="python"),
             lambda g: g["nodes"][0].update(type=[]),
             lambda g: g["nodes"][0].update(position={"x": float("nan"), "y": 0}),
+            lambda g: g["nodes"][0]["data"].update(background_color="#ff0000"),
             lambda g: g["edges"][0].update(target="missing"),
+            lambda g: g["edges"][0].update(sourceHandle="center"),
+            lambda g: g["edges"][0].update(targetHandle=[]),
             lambda g: g.update(viewport={"x": 0, "y": 0, "zoom": 50}),
         ):
             invalid = deepcopy(graph)

@@ -193,6 +193,7 @@ class WorkflowVersion(models.Model):
                             "name": node["data"]["label"],
                             "assignee_id": node["data"]["assignee_id"] or False,
                             "position": node["position"],
+                            "background_color": node["data"].get("background_color"),
                             "config": node["data"].get("config", {}),
                         },
                     )
@@ -206,6 +207,8 @@ class WorkflowVersion(models.Model):
                         "sequence": index,
                         "source_id": by_key[edge["source"]],
                         "target_id": by_key[edge["target"]],
+                        "source_handle": edge.get("sourceHandle"),
+                        "target_handle": edge.get("targetHandle"),
                         "is_default": edge["data"]["default"],
                         "rule": edge["data"]["rule"],
                     }

@@ -32,15 +32,74 @@
     .wf-library { border-right: 1px solid var(--wf-border); }
     .wf-properties { border-left: 1px solid var(--wf-border); }
     .wf-palette-node { display: block; width: 100%; text-align: left; margin-bottom: 8px; border: 1px solid var(--wf-border); }
-    .wf-canvas { min-width: 0; min-height: 360px; }
+    .wf-canvas { min-width: 0; min-height: 360px; position: relative; }
     .wf-node { width: 164px; padding: 12px 16px; border: 1px solid var(--wf-border); border-radius: 8px; background: var(--wf-surface); color: var(--wf-text); }
+    .wf-color-blue { background: color-mix(in srgb, var(--wf-brand) 15%, var(--wf-surface)); }
+    .wf-color-green { background: color-mix(in srgb, var(--wf-success) 15%, var(--wf-surface)); }
+    .wf-color-amber { background: color-mix(in srgb, var(--wf-warning) 18%, var(--wf-surface)); }
+    .wf-color-gray { background: color-mix(in srgb, var(--wf-muted) 18%, var(--wf-surface)); }
+    .wf-node:has(.wf-node-more) .wf-node-kind { padding-right: 40px; }
+    .wf-node .wf-node-more {
+        position: absolute;
+        top: 4px;
+        right: 19px;
+        display: grid;
+        place-items: center;
+        width: 32px;
+        min-height: 28px;
+        padding: 0;
+        background: var(--wf-surface);
+        color: var(--wf-text);
+    }
+    .wf-node-actions {
+        position: absolute;
+        z-index: 6;
+        display: grid;
+        gap: 6px;
+        width: 160px;
+        max-width: 100%;
+        background: var(--wf-surface);
+        color: var(--wf-text);
+    }
+    .wf-node-swatches {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 4px;
+        margin-bottom: 4px;
+    }
+    .wf-node-swatches .wf-node-swatch {
+        height: 26px;
+        min-height: 26px;
+        padding: 0;
+        border: 1px solid var(--wf-border);
+        border-radius: 6px;
+        color: var(--wf-text);
+    }
+    .wf-node-swatch[aria-pressed="true"] { box-shadow: inset 0 0 0 2px var(--wf-brand); }
     .wf-node-kind { font-size: 12px; color: var(--wf-muted); margin-bottom: 6px; }
     .wf-node strong { font-size: 14px; overflow-wrap: anywhere; }
     .wf-node .react-flow__handle {
         width: 14px;
         height: 14px;
-        border: 2px solid var(--wf-surface);
+        opacity: 0;
+        border: 2px solid var(--wf-brand);
+        background: var(--wf-surface);
+    }
+    .wf-node .react-flow__handle.wf-handle-connected,
+    .wf-node .react-flow__handle.connectingfrom,
+    .wf-node .react-flow__handle.clickconnecting,
+    .wf-node .react-flow__handle.valid {
+        opacity: 1;
+        background: var(--wf-brand);
+        border-color: var(--wf-surface);
         box-shadow: 0 0 0 1px var(--wf-brand);
+    }
+    .react-flow__node:focus-visible .wf-node .react-flow__handle { opacity: 1; }
+    @media (hover: hover) {
+        .wf-node:hover .react-flow__handle { opacity: 1; }
+    }
+    @media (hover: none) {
+        .wf-node:has(.wf-node-more) .react-flow__handle { opacity: 1; }
     }
     .wf-node .react-flow__handle.connectionindicator::before {
         // 扩大命中区域，同时保留连线锚点的位置。
