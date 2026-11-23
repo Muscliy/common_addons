@@ -1,0 +1,10 @@
+<odoo>
+    <record id="link_company" model="ir.rule">
+        <field name="name">Workflow project link: companies</field><field name="model_id" ref="model_workflow_project_link"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="link_participant" model="ir.rule">
+        <field name="name">Workflow project link: participants</field><field name="model_id" ref="model_workflow_project_link"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('workflow_core.group_viewer') else [('instance_id.participant_ids', 'in', [user.id])]</field>
+    </record>
+</odoo>

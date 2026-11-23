@@ -30,7 +30,7 @@ async function mount(page, editable = true, initial = graph, extras = {}) {
         window.props = { canvas: { id: 1, revision: 0, graph, node_types: [['start', '开始'], ['task', '人工任务'], ['condition', '条件分支'], ['end', '结束']],
             can_edit: editable, fields: { color: { string: '颜色', type: 'integer' } }, ...extras },
             assignees: [{ id: 4, name: '负责人' }], onReady: get => window.getGraph = get,
-            onChange: () => window.dirty++, onComplete: () => {}, onDecision: (...args) => window.decisions = args };
+            onChange: () => window.dirty++, onComplete: () => {}, onProjectDecision: (...args) => window.projectDecisions = args, onProjectOpen: id => window.projectOpened = id, onDecision: (...args) => window.decisions = args };
         window.bridge = WorkflowCanvas.mount(document.querySelector('#root'), window.props);
     }, { editable, graph: initial, extras });
     await expect(page.locator('.react-flow__node')).toHaveCount(initial.nodes.length);
@@ -140,4 +140,29 @@ test('parallel pairing is editable, serialized and frozen in monitor mode', asyn
     await page.locator('[data-id="task"]').click();
     await expect(page.getByLabel('汇合节点', { exact: true })).toBeDisabled();
     await expect(page.locator('[data-id="join"]')).toContainText('等待分支');
+});
+
+test('project configuration preserves multiple assignees and business binding', async ({ page }) => {
+    const initial = structuredClone(graph);
+    initial.nodes[1].type = 'project_task';
+    await mount(page, true, initial, { node_types: [['project_task', '项目任务']],
+        node_options: { project_task: { projects: [{ id: 7, name: '采购项目' }],
+            users: [{ id: 4, name: '技术负责人' }, { id: 5, name: '财务负责人' }], can_link_business: true } } });
+    await page.locator('[data-id="task"]').click();
+    await page.getByLabel('项目任务方式').selectOption('create');
+    await page.getByLabel('项目', { exact: true }).selectOption('7');
+    await page.getByLabel('项目负责人').selectOption(['4', '5']);
+    expect((await page.evaluate(() => window.getGraph())).nodes[1].data.config).toEqual({ mode: 'create', project_id: 7, user_ids: [4, 5] });
+    await page.getByLabel('项目任务方式').selectOption('business');
+    expect((await page.evaluate(() => window.getGraph())).nodes[1].data.config).toEqual({ mode: 'business' });
+});
+
+test('project monitor opens the native task and sends completion with comments', async ({ page }) => {
+    await mount(page, false, graph, { instance_id: 9, project_tasks: [{ id: 11, name: '采购复核', task_name: '核对采购',
+        task_state: '进行中', assignees: ['技术负责人', '财务负责人'], can_complete: true }] });
+    await page.getByRole('button', { name: '打开项目任务', exact: true }).click();
+    expect(await page.evaluate(() => window.projectOpened)).toBe(11);
+    await page.getByLabel('项目任务意见').fill('已完成核对');
+    await page.getByRole('button', { name: '完成项目任务', exact: true }).click();
+    expect(await page.evaluate(() => window.projectDecisions)).toEqual([11, 'complete', '已完成核对']);
 });

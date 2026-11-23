@@ -60,6 +60,8 @@ export class WorkflowAction extends Component {
             onReady: (serialise) => { this.serialise = serialise; },
             onComplete: (id, comment) => this.complete(id, comment),
             onDecision: (id, reviewId, decision, comment) => this.decide(id, reviewId, decision, comment),
+            onProjectDecision: (id, decision, comment) => this.projectDecision(id, decision, comment),
+            onProjectOpen: (id) => this.projectOpen(id),
         };
         if (this.bridge) this.bridge.update(props);
         else this.bridge = globalThis.WorkflowCanvas.mount(this.container.el, props);
@@ -141,6 +143,27 @@ export class WorkflowAction extends Component {
         return this.perform(async () => {
             await this.orm.call("workflow.instance", "action_review", [[this.params.instance_id], id, reviewId, decision, comment]);
             await this.load();
+        });
+    }
+
+    async projectDecision(id, decision, comment) {
+        if (decision === "cancel") {
+            const confirmed = await new Promise(resolve => this.dialog.add(ConfirmationDialog, {
+                body: _t("取消项目任务将取消整个流程，并关闭其他未完成工作。"),
+                confirm: () => resolve(true), cancel: () => resolve(false),
+            }));
+            if (!confirmed || !this.alive) return;
+        }
+        return this.perform(async () => {
+            await this.orm.call("workflow.project.link", "action_decide", [[id], decision, comment]);
+            await this.load();
+        });
+    }
+
+    projectOpen(id) {
+        return this.perform(async () => {
+            const action = await this.orm.call("workflow.project.link", "action_open", [[id]]);
+            if (this.alive) await this.action.doAction(action);
         });
     }
 
