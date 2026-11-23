@@ -37,7 +37,7 @@ class TestParallelBrowser(WorkflowCase, HttpCase):
                     await wait(() => button());
                     button().click();
                     await wait(() => !document.querySelector('.wf-loading') &&
-                        document.querySelector('[data-id="{target}"]')?.textContent.includes('{expected}'));
+                        document.querySelector('[data-execution="{target}"]')?.textContent.includes('{expected}'));
                     if (document.querySelector('.o_workflow_action [role=alert]')) throw new Error('Parallel operation failed');
                     console.log('test successful');
                 }})();

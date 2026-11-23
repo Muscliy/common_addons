@@ -1,4 +1,7 @@
 import { Component, useState } from "@odoo/owl";
+import { deserializeDateTime, formatDateTime } from "@web/core/l10n/dates";
+
+import { runtimeApprovalHistory, runtimeProgress } from "./workflow_progress";
 
 const nodeStates = {
     done: "已完成",
@@ -56,7 +59,7 @@ export class WorkflowRuntime extends Component {
     }
 
     get approvalHistory() {
-        return (this.props.canvas.approvals || []).filter((approval) => approval.state !== "pending");
+        return runtimeApprovalHistory(this.props.canvas.approvals);
     }
 
     get pendingTasks() {
@@ -68,19 +71,21 @@ export class WorkflowRuntime extends Component {
     }
 
     get progress() {
+        return runtimeProgress(this.props.canvas);
+    }
+
+    get executionDetails() {
         const nodes = new Map(this.props.canvas.graph.nodes.map((node) => [node.id, node]));
-        return this.props.canvas.executions.flatMap((execution) => {
-            const node = nodes.get(execution.node);
-            if (!node) {
-                return [];
-            }
-            return [{
-                ...execution,
-                label: node.data.label,
-                status: node.type === "join" && execution.state === "waiting"
-                    ? "等待分支" : nodeStates[execution.state] || execution.state,
-            }];
-        });
+        return this.props.canvas.executions.map((step) => ({
+            ...step,
+            label: nodes.get(step.node)?.data.label,
+            status: nodes.get(step.node)?.type === "join" && step.state === "waiting"
+                ? "等待分支" : nodeStates[step.state] || step.state,
+        }));
+    }
+
+    dateTime(value) {
+        return value ? formatDateTime(deserializeDateTime(value)) : "";
     }
 
     get history() {

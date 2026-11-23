@@ -123,8 +123,10 @@ class WorkflowInstance(models.Model):
                 "can_start": False,
                 "instance_id": self.id,
                 "instance_state": self.state,
+                "instance_starter": self.starter_id.name,
                 "executions": [
                     {
+                        "id": n.id,
                         "node": n.node_id.key,
                         "state": n.state,
                         "started_at": fields.Datetime.to_string(n.started_at),
@@ -147,6 +149,8 @@ class WorkflowInstance(models.Model):
                         "name": t.name,
                         "state": t.state,
                         "assignee": t.assignee_id.name,
+                        "activation_id": t.node_instance_id.id,
+                        "actor": t.completed_by.name or "",
                         "can_complete": t.state == "pending"
                         and t.assignee_id == self.env.user,
                     }
