@@ -1,32 +1,27 @@
 const nodeWidth = 164;
-const inset = 12;
 
-function scaleNodes(nodes, width, height) {
-    const boxes = nodes.map((node) => ({
-        ...node,
-        ...node.position,
-        width: nodeWidth,
-        height: node.type === "condition" ? 96 : 64,
-    }));
+function layoutNodes(nodes) {
+    return new Map(
+        nodes.map((node) => [
+            node.id,
+            { ...node, ...node.position, width: nodeWidth, height: node.type === "condition" ? 96 : 64 },
+        ]),
+    );
+}
+
+function fitPreview(ctx, nodes, width, height, inset, maxScale) {
+    const boxes = [...nodes.values()];
     const left = Math.min(...boxes.map((node) => node.x));
     const top = Math.min(...boxes.map((node) => node.y));
     const contentWidth = Math.max(...boxes.map((node) => node.x + node.width)) - left;
     const contentHeight = Math.max(...boxes.map((node) => node.y + node.height)) - top;
-    const scale = Math.min(0.78, (width - 2 * inset) / contentWidth, (height - 2 * inset) / contentHeight);
-    const offsetX = (width - scale * contentWidth) / 2;
-    const offsetY = (height - scale * contentHeight) / 2;
-    return new Map(
-        boxes.map((node) => [
-            node.id,
-            {
-                ...node,
-                x: offsetX + (node.x - left) * scale,
-                y: offsetY + (node.y - top) * scale,
-                width: node.width * scale,
-                height: node.height * scale,
-            },
-        ]),
+    const scale = Math.min(maxScale, (width - 2 * inset) / contentWidth, (height - 2 * inset) / contentHeight);
+    ctx.translate(
+        (width - scale * contentWidth) / 2 - left * scale,
+        (height - scale * contentHeight) / 2 - top * scale,
     );
+    ctx.scale(scale, scale);
+    ctx.lineWidth = 1 / scale;
 }
 
 const anchors = {
@@ -74,27 +69,23 @@ function drawNode(ctx, node, colors) {
     }
     ctx.strokeStyle = colors.blue;
     ctx.stroke();
-    const labelWidth = (node.type === "condition" ? width * 0.58 : width) - 6;
-    if (labelWidth >= 20 && height >= 13) {
-        let label = node.label;
-        if (ctx.measureText(label).width > labelWidth) {
-            label = "";
-            for (const character of node.label) {
-                if (ctx.measureText(label + character + "…").width > labelWidth) {
-                    break;
-                }
-                label += character;
-            }
-            label += "…";
-        }
-        ctx.fillStyle = colors.text;
-        ctx.fillText(label, x + width / 2, y + height / 2);
+    const labelWidth = (node.type === "condition" ? width * 0.66 : width) - 12;
+    ctx.fillStyle = colors.text;
+    if (ctx.measureText(node.label).width <= labelWidth) {
+        ctx.fillText(node.label, x + width / 2, y + height / 2);
+        return;
     }
+    const characters = Array.from(node.label);
+    const middle = Math.ceil(characters.length / 2);
+    ctx.fillText(characters.slice(0, middle).join(""), x + width / 2, y + height / 2 - 8, labelWidth);
+    ctx.fillText(characters.slice(middle).join(""), x + width / 2, y + height / 2 + 8, labelWidth);
 }
 
 export function drawPreview(canvas, graph) {
     const width = canvas.clientWidth;
     const height = canvas.clientHeight;
+    const style = getComputedStyle(canvas);
+    const inset = parseFloat(style.fontSize);
     if (width <= 2 * inset || height <= 2 * inset || !graph?.nodes?.length) {
         return;
     }
@@ -103,14 +94,15 @@ export function drawPreview(canvas, graph) {
     canvas.height = Math.round(height * pixelRatio);
     const ctx = canvas.getContext("2d");
     ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-    const style = getComputedStyle(canvas);
     const colors = Object.fromEntries(
         ["surface", "text", "muted", "blue", "green", "amber", "gray"].map((name) => [
             name,
             style.getPropertyValue("--wf-preview-" + name).trim(),
         ]),
     );
-    const nodes = scaleNodes(graph.nodes, width, height);
+    const nodes = layoutNodes(graph.nodes);
+    const maxScale = canvas.classList.contains("o_workflow_preview_large") ? 1.5 : 0.78;
+    fitPreview(ctx, nodes, width, height, inset, maxScale);
     ctx.strokeStyle = colors.muted;
     for (const edge of graph.edges) {
         const source = nodes.get(edge.source);
@@ -119,7 +111,7 @@ export function drawPreview(canvas, graph) {
             connector(ctx, source, target, edge);
         }
     }
-    ctx.font = "10px " + style.fontFamily;
+    ctx.font = style.fontSize + " " + style.fontFamily;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     for (const node of nodes.values()) {

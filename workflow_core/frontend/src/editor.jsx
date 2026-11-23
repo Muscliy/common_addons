@@ -4,6 +4,7 @@ import { ReactFlow, ReactFlowProvider, Background, Controls, MiniMap, useReactFl
 import { nodeTypes } from './node.jsx';
 import { Properties } from './properties.jsx';
 import { NodeActions } from './node_actions.jsx';
+import { approvalDirectory, nodeReviewers } from './node_reviewers.jsx';
 import { connectedSides, defaultHandles, exampleGraph, labels, serialise } from './graph.js';
 
 function Canvas({ canvas, assignees = [], onChange, onReady, onComplete, onDecision, onProjectDecision, onProjectOpen, busy }) {
@@ -55,9 +56,12 @@ function Canvas({ canvas, assignees = [], onChange, onReady, onComplete, onDecis
     const displayEdges = edges.map(e => ({ ...defaultHandles, ...e,
         label: e.data?.default ? '默认' : e.data?.rule && Object.keys(e.data.rule).length ? '满足条件' : '' }));
     const connected = connectedSides(displayEdges);
+    const directory = approvalDirectory(canvas.approval_labels, canvas.node_options?.approval);
+    const approvals = new Map((canvas.approvals || []).map(approval => [approval.node, approval]));
     const displayNodes = nodes.map((node) => ({ ...node, data: { ...node.data,
         state: executions[node.id]?.state, execution: executions[node.id],
         connectedSides: connected.get(node.id),
+        reviewers: node.type === 'approval' ? nodeReviewers(node, directory, approvals.get(node.id)) : [],
         openActions: canvas.can_edit && selection?.kind === 'node' && selection.id === node.id
             ? event => openActions(event, node.id, true) : null,
     } }));

@@ -43,7 +43,8 @@ class TestWorkflowBrowser(HttpCase):
                 const wait = async (condition, label) => {
                     const until = Date.now() + 20000;
                     while (Date.now() < until) {
-                        if (condition()) return;
+                        const value = condition();
+                        if (value) return value;
                         await new Promise(resolve => setTimeout(resolve, 50));
                     }
                     throw new Error(`Timed out: ${label}; ${document.querySelector('[role=alert]')?.textContent}`);
@@ -62,14 +63,29 @@ class TestWorkflowBrowser(HttpCase):
                 if (!templateCard().querySelector('.o_workflow_preview').textContent.includes('暂无流程节点')) {
                     throw new Error('Empty templates must show an empty preview');
                 }
-                await wait(() => {
-                    const card = [...document.querySelectorAll('.o_kanban_view .o_kanban_record')]
-                        .find(record => record.textContent.includes('Saved canvas preview'));
-                    const canvas = card?.querySelector('canvas[aria-label="流程画布预览"]');
+                const previewCard = () => [...document.querySelectorAll('.o_kanban_view .o_kanban_record')]
+                    .find(record => record.textContent.includes('Saved canvas preview'));
+                const previewCanvas = await wait(() => {
+                    const canvas = previewCard()?.querySelector('canvas[aria-label="流程画布预览"]');
                     if (!canvas?.width || !canvas.height) return false;
                     const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
-                    return pixels.some((value, index) => index % 4 === 3 && value > 0);
+                    return pixels.some((value, index) => index % 4 === 3 && value > 0) && canvas;
                 }, 'draw saved graph on the kanban card');
+                const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
+                const previewSize = parseFloat(getComputedStyle(previewCanvas).fontSize);
+                if (Math.abs(previewSize - 0.875 * rootSize) > 0.01) {
+                    throw new Error('Preview label size must follow the root font size');
+                }
+                const cardScale = previewCanvas.getContext('2d').getTransform();
+                if (cardScale.a !== cardScale.d) throw new Error('The card preview must scale uniformly');
+                previewCard().querySelector('button[aria-label="放大预览"]').click();
+                await wait(() => {
+                    const enlarged = document.querySelector('.modal .o_workflow_preview_large');
+                    const scale = enlarged?.getContext('2d').getTransform();
+                    return scale && scale.a > cardScale.a && scale.a === scale.d;
+                }, 'enlarged preview');
+                document.querySelector('.modal-header .btn-close').click();
+                await wait(() => !document.querySelector('.modal .o_workflow_preview_large'), 'close enlarged preview');
                 if (!templateCard().textContent.includes('未发布')) {
                     throw new Error('The draft template card must show its publication status');
                 }

@@ -27,6 +27,11 @@ class TestApprovalBrowser(ApprovalCase, HttpCase):
                     }
                 };
                 const button = () => [...document.querySelectorAll('.wf-properties button')].find(el => el.textContent === '通过');
+                await wait(() => document.querySelectorAll('.wf-approval .wf-node-reviewer-name').length === 2);
+                const reviewer = document.querySelector('.wf-approval .wf-node-reviewer-name');
+                if (getComputedStyle(reviewer).color === getComputedStyle(reviewer.closest('.wf-node')).color) {
+                    throw new Error('Approval names must use their distinct color');
+                }
                 await wait(() => button() && !button().disabled);
                 button().click();
                 await wait(() => !document.querySelector('.wf-loading') && !button());

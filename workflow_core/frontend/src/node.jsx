@@ -1,6 +1,7 @@
 import React from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { backgrounds, labels, states } from './graph.js';
+import { NodeReviewers } from './node_reviewers.jsx';
 
 const icons = { start: 'fa-play', end: 'fa-stop', task: 'fa-user', condition: 'fa-code-fork', fork: 'fa-random', join: 'fa-compress', approval: 'fa-check-square-o', project_task: 'fa-tasks' };
 
@@ -20,6 +21,7 @@ export function WorkflowNode({ type, data }) {
         </button>}
         <div className="wf-node-kind"><i className={`fa ${icons[type]}`} aria-hidden="true" /> {labels[type]}</div>
         <strong title={type === 'condition' ? data.label : undefined}>{data.label}</strong>
+        {data.reviewers?.length > 0 && <NodeReviewers reviewers={data.reviewers} />}
         {data.state && <div className="wf-node-state">{type === 'join' && data.state === 'waiting' ? '等待分支' : states[data.state] || data.state}</div>}
     </div>;
 }
