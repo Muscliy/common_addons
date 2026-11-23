@@ -57,13 +57,28 @@ class TestWorkflowBrowser(HttpCase):
                     throw new Error('Designer URL is missing the version ID');
                 }
                 await wait(() => document.querySelectorAll('.react-flow__node').length === 3, 'nodes');
-                const handle = document.querySelector('[data-id="start"] .react-flow__handle.source');
+                const handle = document.querySelector('[data-id="start"] [data-handleid="right"]');
                 const bounds = handle.getBoundingClientRect();
                 const hit = document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y - bounds.height / 4);
+                const freePort = document.querySelector('[data-id="start"] [data-handleid="top"]');
+                if (!handle.classList.contains('wf-handle-connected') ||
+                    freePort.classList.contains('wf-handle-connected') || getComputedStyle(handle).opacity !== '1') {
+                    throw new Error('Connected ports must be marked and visible without hover');
+                }
                 if (getComputedStyle(handle).width !== '14px' || hit !== handle) {
                     throw new Error('The connection handle must accept input outside the visible dot');
                 }
-                document.querySelector('[data-id="task"]').click();
+                const task = document.querySelector('[data-id="task"]');
+                const card = () => document.querySelector('[data-id="task"] .wf-node');
+                const defaultBackground = getComputedStyle(card()).backgroundColor;
+                task.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+                await wait(() => document.querySelector('.wf-node-actions'), 'node actions');
+                document.querySelector('.wf-node-swatches button[aria-label="浅绿"]').click();
+                await wait(() => card().classList.contains('wf-color-green'), 'node color selection');
+                if (getComputedStyle(card()).backgroundColor === defaultBackground) {
+                    throw new Error('Selected node background color did not render');
+                }
+                await click('编辑属性');
                 await wait(() => document.querySelector('#wf-node-name'), 'properties');
                 const name = document.querySelector('#wf-node-name');
                 const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
@@ -80,6 +95,7 @@ class TestWorkflowBrowser(HttpCase):
                 await click('发布');
                 await wait(() => button('启动流程'), 'publish');
                 if (button('保存')) throw new Error('Published canvas remained editable');
+                await wait(() => document.querySelector('.wf-color-green'), 'published node background');
                 await click('启动流程');
                 await wait(() => button('完成任务'), 'task created');
                 if (!/\/workflow-monitor\/[0-9]+$/.test(location.pathname)) {
@@ -100,6 +116,12 @@ class TestWorkflowBrowser(HttpCase):
         )
         self.assertEqual(instance.state, "done")
         self.assertEqual(instance.task_ids.name, "浏览器确认任务")
+        self.assertEqual(
+            instance.version_id.node_ids.filtered(
+                lambda node: node.key == "task",
+            ).background_color,
+            "green",
+        )
         for path, label, view in (
             (
                 f"/odoo/workflow-designer/{instance.version_id.id}",

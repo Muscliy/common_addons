@@ -3,7 +3,11 @@ from odoo.exceptions import UserError, ValidationError
 
 from odoo.addons.workflow_core.services.access import require_internal_write
 from odoo.addons.workflow_core.services.engine import create_task
-from odoo.addons.workflow_core.services.graph_validation import NODE_TYPES
+from odoo.addons.workflow_core.services.graph_validation import (
+    HANDLE_POSITIONS,
+    NODE_BACKGROUNDS,
+    NODE_TYPES,
+)
 
 
 class WorkflowGraphElement(models.AbstractModel):
@@ -60,6 +64,7 @@ class WorkflowNode(models.Model):
     kind = fields.Selection(NODE_TYPES, required=True)
     position = fields.Json(required=True)
     config = fields.Json(default=dict)
+    background_color = fields.Selection(NODE_BACKGROUNDS, string="节点背景色")
     assignee_id = fields.Many2one("res.users", string="负责人", ondelete="restrict")
     _key_unique = models.Constraint(
         "UNIQUE(version_id, key)",
@@ -75,6 +80,8 @@ class WorkflowNode(models.Model):
         }
         if self.config:
             result["data"]["config"] = self.config
+        if self.background_color:
+            result["data"]["background_color"] = self.background_color
         return result
 
     def _validate_config(self, kind: str, config: dict, version) -> None:
@@ -117,6 +124,8 @@ class WorkflowEdge(models.Model):
     sequence = fields.Integer()
     source_id = fields.Many2one("workflow.node", required=True, ondelete="restrict")
     target_id = fields.Many2one("workflow.node", required=True, ondelete="restrict")
+    source_handle = fields.Selection(HANDLE_POSITIONS, string="出线连接点")
+    target_handle = fields.Selection(HANDLE_POSITIONS, string="入线连接点")
     is_default = fields.Boolean()
     rule = fields.Json(default=dict)
     _key_unique = models.Constraint(
@@ -134,9 +143,14 @@ class WorkflowEdge(models.Model):
                 raise ValidationError(self.env._("连线两端必须属于同一流程版本。"))
 
     def _canvas_data(self) -> dict:
-        return {
+        result = {
             "id": self.key,
             "source": self.source_id.key,
             "target": self.target_id.key,
             "data": {"default": self.is_default, "rule": self.rule or {}},
         }
+        if self.source_handle:
+            result["sourceHandle"] = self.source_handle
+        if self.target_handle:
+            result["targetHandle"] = self.target_handle
+        return result

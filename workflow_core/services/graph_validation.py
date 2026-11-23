@@ -15,6 +15,18 @@ NODE_TYPES = [
     ("fork", "并行分支"),
     ("join", "并行汇合"),
 ]
+NODE_BACKGROUNDS = [
+    ("blue", "浅蓝"),
+    ("green", "浅绿"),
+    ("amber", "浅橙"),
+    ("gray", "浅灰"),
+]
+HANDLE_POSITIONS = [
+    ("top", "上"),
+    ("right", "右"),
+    ("bottom", "下"),
+    ("left", "左"),
+]
 KEY = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 
@@ -53,7 +65,7 @@ def validate_payload(graph: dict, node_types=None) -> None:
         if (
             not isinstance(data, dict)
             or not {"label", "assignee_id"} <= data.keys()
-            or set(data) - {"label", "assignee_id", "config"}
+            or set(data) - {"label", "assignee_id", "config", "background_color"}
             or not isinstance(data.get("config", {}), dict)
         ):
             message = "节点属性不正确。"
@@ -67,16 +79,27 @@ def validate_payload(graph: dict, node_types=None) -> None:
         if type(data["assignee_id"]) is not int or data["assignee_id"] < 0:
             message = "负责人格式不正确。"
             raise ValidationError(message)
+        if "background_color" in data:
+            color = data["background_color"]
+            if not isinstance(color, str) or color not in dict(NODE_BACKGROUNDS):
+                message = "节点背景色不正确。"
+                raise ValidationError(message)
     edge_keys = set()
+    required_edge_keys = {"id", "source", "target", "data"}
+    handle_keys = {"sourceHandle", "targetHandle"}
     for edge in edges:
-        if not isinstance(edge, dict) or set(edge) != {
-            "id",
-            "source",
-            "target",
-            "data",
-        }:
+        if (
+            not isinstance(edge, dict)
+            or not required_edge_keys <= edge.keys()
+            or set(edge) - required_edge_keys - handle_keys
+        ):
             message = "连线格式不正确。"
             raise ValidationError(message)
+        for key in handle_keys & edge.keys():
+            side = edge[key]
+            if not isinstance(side, str) or side not in dict(HANDLE_POSITIONS):
+                message = "连线连接点不正确。"
+                raise ValidationError(message)
         _key(edge["id"], edge_keys)
         if not isinstance(edge["source"], str) or not isinstance(edge["target"], str):
             message = "连线节点格式不正确。"

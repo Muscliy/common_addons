@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { RuleEditor } from './rule_editor.jsx';
 import { labels, states } from './graph.js';
+import { BackgroundSelect } from './node_actions.jsx';
 import { ApprovalEditor } from './approval_editor.jsx';
 import { ApprovalPanel } from './approval_panel.jsx';
 import { ProjectEditor } from './project_editor.jsx';
@@ -20,6 +21,9 @@ export function Properties({ node, edge, nodes, canvas, assignees, updateNode, u
             <label className="form-label" htmlFor="wf-node-name">节点名称</label>
             <input id="wf-node-name" className="form-control" value={node.data.label} disabled={!editable}
                 maxLength={120} onChange={(e) => updateNode({ label: e.target.value })} />
+            <label className="form-label" htmlFor="wf-node-background">节点背景色</label>
+            <BackgroundSelect id="wf-node-background" value={node.data.background_color} disabled={!editable}
+                onChange={color => updateNode({ background_color: color })} />
             {node.type === 'task' && <>
                 <label className="form-label" htmlFor="wf-assignee">负责人</label>
                 <select id="wf-assignee" className="form-select" value={node.data.assignee_id || 0} disabled={!editable}

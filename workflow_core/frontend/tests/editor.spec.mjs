@@ -22,7 +22,7 @@ async function mount(page, editable = true, initial = graph, extras = {}) {
         .wf-editor {display:grid;grid-template-columns:160px minmax(0,1fr) 280px;height:100%}
         .wf-node{background:white;padding:16px;width:164px;border:1px solid gray}
         .wf-library,.wf-properties{padding:12px}.wf-mobile-tabs{display:none}
-        .wf-canvas{min-width:0}.wf-palette-node{display:block;margin:12px}
+        .wf-canvas{min-width:0;position:relative}.wf-node-actions{position:absolute;z-index:6;background:white}.wf-palette-node{display:block;margin:12px}
     ` });
     await page.addScriptTag({ content: readFileSync(resolve(root, 'static/lib/workflow_canvas.js'), 'utf8') });
     await page.evaluate(({ editable, graph, extras }) => {
@@ -46,29 +46,88 @@ test('drag, properties, connection, save and remount retain the actual graph', a
     await task.click();
     await page.getByLabel('节点名称').fill('修改后的任务');
     await page.getByLabel('负责人', { exact: true }).selectOption('4');
-    const source = page.locator('[data-id="start"] .source');
-    const target = page.locator('[data-id="task"] .target');
-    const a = await source.boundingBox(), b = await target.boundingBox();
-    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
-    await page.mouse.down(); await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 15 }); await page.mouse.up();
+    const source = handle(page, 'start', 'right');
+    const target = handle(page, 'task', 'left');
+    await connect(page, source, target);
     await expect(page.locator('.react-flow__edge')).toHaveCount(1);
     const saved = await page.evaluate(() => window.getGraph());
     expect(saved.nodes[1].position.x).not.toBe(graph.nodes[1].position.x);
     expect(saved.nodes[1].data).toEqual({ label: '修改后的任务', assignee_id: 4 });
     expect(saved.edges[0].source).toBe('start');
+    await remount(page, saved);
+    await expect(page.locator('[data-id="task"]')).toContainText('修改后的任务');
+    expect(await page.evaluate(() => window.getGraph())).toEqual(saved);
+});
+
+function handle(page, node, side) {
+    return page.locator(`[data-id="${node}"] [data-handleid="${side}"]`);
+}
+
+async function connect(page, source, target) {
+    const a = await source.boundingBox(), b = await target.boundingBox();
+    await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+    await page.mouse.down(); await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2, { steps: 15 }); await page.mouse.up();
+}
+
+async function remount(page, saved) {
     await page.evaluate(saved => {
         window.bridge.destroy();
         window.bridge = WorkflowCanvas.mount(document.querySelector('#root'), { ...window.props,
             canvas: { ...window.props.canvas, graph: saved }, onReady: get => window.getGraph = get });
     }, saved);
-    await expect(page.locator('[data-id="task"]')).toContainText('修改后的任务');
+}
+
+test('node actions edit properties, persist color and remove incident connections', async ({ page }) => {
+    const initial = structuredClone(graph);
+    initial.nodes[1].position = { x: 320, y: 260 };
+    await mount(page, true, initial);
+    const task = page.locator('[data-id="task"]');
+    await expect(task.locator('.react-flow__handle')).toHaveCount(4);
+    await expect(task.locator('.wf-handle-connected')).toHaveCount(0);
+    await connect(page, handle(page, 'start', 'bottom'), handle(page, 'task', 'top'));
+    await connect(page, handle(page, 'task', 'left'), handle(page, 'end', 'bottom'));
+    await expect(page.locator('.react-flow__edge')).toHaveCount(2);
+    await expect(handle(page, 'task', 'top')).toHaveClass(/wf-handle-connected/);
+    await expect(handle(page, 'task', 'left')).toHaveClass(/wf-handle-connected/);
+    await expect(handle(page, 'task', 'right')).not.toHaveClass(/wf-handle-connected/);
+
+    const actions = page.getByRole('dialog', { name: '节点操作' });
+    await task.click({ button: 'right' });
+    await expect(actions).toBeVisible();
+    const green = actions.getByRole('button', { name: '浅绿' });
+    await green.click();
+    await expect(green).toHaveAttribute('aria-pressed', 'true');
+    await expect(task.locator('.wf-node')).toHaveClass(/\bwf-color-green\b/);
+    await actions.getByRole('button', { name: '编辑属性' }).click();
+    await expect(actions).toHaveCount(0);
+    await expect(page.getByLabel('节点背景色')).toHaveValue('green');
+    const more = task.getByRole('button', { name: '节点操作' });
+    await more.click();
+    await expect(actions).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(actions).toHaveCount(0);
+    await expect(more).toBeFocused();
+
+    const saved = await page.evaluate(() => window.getGraph());
+    expect(saved.edges[0]).toMatchObject({ source: 'start', sourceHandle: 'bottom', target: 'task', targetHandle: 'top' });
+    expect(saved.edges[1]).toMatchObject({ source: 'task', sourceHandle: 'left', target: 'end', targetHandle: 'bottom' });
+    await remount(page, saved);
+    await expect(task.locator('.wf-node')).toHaveClass(/\bwf-color-green\b/);
+    await expect(page.locator('.react-flow__edge')).toHaveCount(2);
     expect(await page.evaluate(() => window.getGraph())).toEqual(saved);
+    await task.click({ button: 'right' });
+    await actions.getByRole('button', { name: '删除节点' }).click();
+    await expect(task).toHaveCount(0);
+    await expect(page.locator('.react-flow__edge')).toHaveCount(0);
+    await expect(page.locator('.wf-handle-connected')).toHaveCount(0);
 });
 
 test('readonly mode prevents dragging, adding, editing and deletion', async ({ page }) => {
     await mount(page, false);
     await page.locator('[data-id="task"]').click();
     await expect(page.getByLabel('节点名称')).toBeDisabled();
+    await expect(page.getByLabel('节点背景色')).toBeDisabled();
+    await expect(page.getByRole('button', { name: '节点操作' })).toHaveCount(0);
     await expect(page.getByRole('button', { name: '人工任务', exact: true })).toBeDisabled();
     await page.keyboard.press('Delete');
     await expect(page.locator('.react-flow__node')).toHaveCount(3);
