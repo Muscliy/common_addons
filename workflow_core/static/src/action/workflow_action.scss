@@ -27,6 +27,7 @@
     h1 { font-size: 18px; margin: 0; }
     h2 { font-size: 15px; font-weight: 600; margin: 0 0 16px; }
     .wf-react-root { flex: 1; min-height: 0; }
+    .wf-monitor { --xy-edge-stroke-width: 2; }
     .wf-editor { display: grid; grid-template-columns: 160px minmax(0, 1fr) 280px; height: 100%; position: relative; }
     .wf-library, .wf-properties { background: var(--wf-surface); padding: 20px 16px; overflow-y: auto; }
     .wf-library { border-right: 1px solid var(--wf-border); }

@@ -144,6 +144,29 @@ test('condition edge shows the comparison and updates as the rule is edited', as
     await expect(line.getByText('默认', { exact: true })).toBeVisible();
 });
 
+test('monitor leaves room for vertical connections between approval and condition cards', async ({ page }) => {
+    const initial = structuredClone(graph);
+    const [approval, condition, end] = initial.nodes;
+    approval.type = 'approval';
+    approval.position = { x: 280, y: 100 };
+    condition.type = 'condition';
+    condition.position = { x: 280, y: 185 };
+    end.position = { x: 280, y: 265 };
+    initial.edges = [
+        { id: 'approval_condition', source: approval.id, target: condition.id, sourceHandle: 'bottom', targetHandle: 'top', data: { default: false, rule: {} } },
+        { id: 'condition_end', source: condition.id, target: end.id, sourceHandle: 'bottom', targetHandle: 'top', data: { default: true, rule: {} } },
+    ];
+    await mount(page, false, initial, { instance_id: 4 });
+    const gap = (upper, lower) => page.evaluate(([upper, lower]) => {
+        const top = document.querySelector(`[data-id="${upper}"] .wf-node`).getBoundingClientRect();
+        const bottom = document.querySelector(`[data-id="${lower}"] .wf-node`).getBoundingClientRect();
+        return Math.round(bottom.top - top.bottom);
+    }, [upper, lower]);
+    await expect.poll(() => gap(approval.id, condition.id)).toBeGreaterThanOrEqual(51);
+    await expect.poll(() => gap(condition.id, end.id)).toBeGreaterThanOrEqual(51);
+    expect(await page.evaluate(() => window.getGraph())).toEqual(initial);
+});
+
 test('readonly mode prevents dragging, adding, editing and deletion', async ({ page }) => {
     await mount(page, false);
     await page.locator('[data-id="task"]').click();
