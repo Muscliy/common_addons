@@ -1,7 +1,7 @@
 {
     "name": "通用工作流",
     "summary": "可视化流程设计、版本发布、人工待办与执行监控",
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.1.0",
     "category": "Productivity/Workflow",
     "license": "LGPL-3",
     "depends": ["web", "mail"],

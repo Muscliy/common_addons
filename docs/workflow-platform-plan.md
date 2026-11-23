@@ -1,6 +1,6 @@
 # 通用工作流平台实施方案
 
-日期：2026-11-23。阶段一调研与依赖准备已完成；阶段二 `workflow_core` 已实现，实际范围和验证见第10节及模块 README。下文保留总体设计，阶段三至五的模型和功能仍为待实施内容，不能视为已经可用。
+日期：2026-11-23。阶段一至三已实现，核心与可选审批适配器的实际范围和验证见第10、11节及模块 README。下文保留总体设计，阶段四、五仍为待实施内容，不能视为已经可用。
 
 ## 1. 已确认的模块和命名
 
@@ -63,7 +63,7 @@ yabo_platform/
 
 单条 review 的多候选人是任意一人通过；多条 review 全部通过才整体通过。会签/或签应显式定义参与人和满足策略。restart_validation 会删除旧 reviews，不能代替工作流的不可覆盖历史。
 
-基础 tier.review 的内部用户 ACL 允许 CRUD，write 中未见 reviewer 级状态保护。这是源码层发现，未做攻击复现；阶段三必须保护 workflow 所属 review 的 create/write/unlink、definition、model/res_id、评论向导，以及受关联业务权限限制的读访问，覆盖直接 RPC 绕过。不得使用可伪造的 context 标记作为唯一授权条件，不通过新增限制规则与上游宽松规则做 OR 来声称收紧权限。
+基础 tier.review 的内部用户 ACL 允许 CRUD，write 中未见 reviewer 级状态保护。阶段一仅作源码核验；阶段三已完成 ORM/RPC 攻击回归并保护 workflow 所属 review 的 create/write/unlink、definition、model/res_id、评论向导，以及受关联业务权限限制的读访问，覆盖直接 RPC 绕过。不得使用可伪造的 context 标记作为唯一授权条件，不通过新增限制规则与上游宽松规则做 OR 来声称收紧权限。
 
 ## 5. React Flow 与 OWL 集成方案
 
@@ -159,3 +159,27 @@ MVP 人工任务采用明确定义的负责人或当前发起人，候选组/领
 - 桌面/390px及实际主题覆盖检查通过：原生菜单打开已保存的条件流程、保存返回新 revision、只读监控不可保存，页面无未捕获 JS 异常。390px 下 document.scrollWidth=390，无横向溢出；选中描边随 `--wf-brand` 从实际主题蓝切到测试色后恢复。实际检查了设计器桌面/窄屏、监控截图，证据为 `.local/workflow-phase2-visuals/{designer-desktop.png,designer-mobile.png,monitor-desktop.png,verification.json}`。
 
 主仓库只更新公共模块提交指针和 Docker context 排除规则，避免把 node_modules、Playwright 输出带入镜像。未构建 Docker 镜像、未推送、未部署；不能据本地验证宣称生产已安装。
+
+## 11. 阶段三实现与验证
+
+已交付 [workflow_tier_validation](../workflow_tier_validation/README.md)，依赖核心与 OCA base_tier_validation。上游仍是 external_addons 下原 Git submodule 的固定提交，未修改第三方源码。新增代码位于 common_addons，模型沿用 workflow.*，新业务表与关系表使用 abt_workflow_ 前缀。
+
+实现范围：审批节点设计、指定人/组任一人/用户或组关系字段、1至20级顺序审批、激活时冻结候选人、独立节点审批单/定义快照、通过/拒绝/意见、我的审批、执行图级次历史、取消联动及原生待审批计数刷新。任一级拒绝结束实例，不把拒绝当成退回；尚无转交、撤回、会签策略、并行、超时或邮件/活动提醒。
+
+核心仅增加受校验的节点 config、注册类型/元数据/激活钩子及可选审批画布组件，不导入 OCA，也不新增核心生产依赖。适配器将每条原生 review 作为单次决策对象；RPC 必须携带固定 review ID，同人连续多级也不能因网络重试误批后一级。最后一级通过与后继人工任务创建在同一事务，后继失败则审批意见/状态/日志全部回滚。双连接竞争依赖核心的 MVCC 更新锁及 Odoo 全事务重试。
+
+安全约束覆盖 workflow 所属 review/definition 的直接创建、修改、删除、复制、关联转换、context defaults、伪造 sudo/skip 标记和评论向导；写能力是绑定数据库/游标/激活的 Python ContextVar，客户端不能提供。多公司和参与人规则取全局交集，审批及 tier 记录的原业务读取限制覆盖直接 read、缓存命中和导出。更新上游模块期间适配器字段尚未注册时，规则拒绝工作流数据、允许普通 OCA 单据按原规则处理，避免中间 registry 引用不存在的字段。
+
+验证环境及结果（隔离本地库，无远端或业务库操作）：
+
+- 安装：`codex_workflow_20261123_phase3` 首次 `-i workflow_tier_validation` 成功，日志 `.local/workflow-phase3-install.log`。
+- 完整全新安装回归：`codex_workflow_20261123_phase3_delivery`，`-i showroom_backend_theme,workflow_tier_validation --test-tags=/workflow_core,/workflow_tier_validation,/base_tier_validation`，其余参数同第9节，使用 local/test、HTTP8096/gevent8097、独立 data-dir。`.local/workflow-phase3-fresh-delivery.log` 为127项、0失败/0错误，包含 OCA83、核心25、适配器19项，不使用 tests.stats 的内部计数重复累计。
+- 完整升级回归：同一干净 delivery 库执行 `-u base_tier_validation,workflow_core,workflow_tier_validation` 及相同测试参数，`.local/workflow-phase3-upgrade-delivery.log` 为127项、0失败/0错误；验证了持久规则在上游中间 registry 阶段的兼容性。
+- 适配器19项覆盖多审批节点隔离、两人顺序通过、同人连续两级、组任一人/动态字段快照、拒绝、取消、无权限/跨公司、无效配置/空候选人、后继失败整步回滚、直接 ORM/RPC 防绕过、两候选人双连接竞争及固定ID重试。两个真实 HttpCase 覆盖两用户画布审批与伪造 RPC/评论向导。核心及 OCA 自带浏览器组件测试包含在对应测试数中。
+- `npm test -- --reporter=line`：5项 Playwright 通过，新增审批配置类型/顺序序列化、意见必填、固定 review ID 和只读操作隐藏检查。`npm run build` 成功，无新增 npm 依赖。
+- `.venv/bin/ruff check common_addons/workflow_core common_addons/workflow_tier_validation` 和 `ruff format --check` 通过；42个 Python 文件已格式化，保留项目 COM812 与 formatter 兼容提示。手写源文件最大251行，按模型、决策、快照、能力、配置、集成和测试职责组织。
+- 实际主题界面：原生菜单打开审批设计器和我的审批，1440px及390px检查通过，窄屏 document.scrollWidth=390，控制台无未捕获异常。已检查 `.local/workflow-phase3-visuals/{designer-desktop.png,designer-mobile.png,monitor-desktop.png,monitor-mobile.png}`，对应 `verification.json` 留存尺寸和异常检查。构建重跑后 JS、CSS 和许可证哈希相同。
+- 核心独立升级：`codex_workflow_20261123_clean` 用 `--addons-path=addons,common_addons -u workflow_core` 成功，OCA审批和Project均未安装。日志 `.local/workflow-phase3-core-only.log`。
+- 在途升级：独立 phase3 库保存第一审批人已通过、第二人待处理的实例后升级。检查确认发布版本ID、审批单ID、review ID/状态/意见、运行状态及没有后继任务全部保留。日志 `.local/workflow-phase3-upgrade.log` 与 `.local/workflow-phase3-upgrade-check.log`。
+
+曾发现并修复缓存命中的读取检查缺口，以及上游 at_install 测试阶段部分 registry 与持久规则字段不匹配的问题。OCA 原生测试有对所有 tier.definition 的无条件写入；带持久审批快照的预览库会按审计契约拒绝这种写入，因此完整上游回归使用干净隔离库，未放宽快照保护或修改上游测试。早期失败日志不作为通过证据。

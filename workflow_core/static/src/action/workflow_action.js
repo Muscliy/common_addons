@@ -59,6 +59,7 @@ export class WorkflowAction extends Component {
             onChange: () => { if (this.alive && this.state.canvas.can_edit) this.state.dirty = true; },
             onReady: (serialise) => { this.serialise = serialise; },
             onComplete: (id, comment) => this.complete(id, comment),
+            onDecision: (id, reviewId, decision, comment) => this.decide(id, reviewId, decision, comment),
         };
         if (this.bridge) this.bridge.update(props);
         else this.bridge = globalThis.WorkflowCanvas.mount(this.container.el, props);
@@ -133,6 +134,13 @@ export class WorkflowAction extends Component {
         return this.perform(async () => {
             const result = await this.orm.call("workflow.instance", "action_business_record", [[this.params.instance_id]]);
             if (this.alive) await this.action.doAction(result);
+        });
+    }
+
+    decide(id, reviewId, decision, comment) {
+        return this.perform(async () => {
+            await this.orm.call("workflow.instance", "action_review", [[this.params.instance_id], id, reviewId, decision, comment]);
+            await this.load();
         });
     }
 

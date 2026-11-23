@@ -15,7 +15,7 @@ NODE_TYPES = [
 KEY = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 
-def validate_payload(graph: dict) -> None:
+def validate_payload(graph: dict, node_types=None) -> None:
     """草稿允许不完整的图, 但不允许恶意结构、未知类型或悬空引用。"""
     if not isinstance(graph, dict) or set(graph) != {"nodes", "edges", "viewport"}:
         message = "画布数据格式不正确。"
@@ -40,12 +40,19 @@ def validate_payload(graph: dict) -> None:
             message = "节点格式不正确。"
             raise ValidationError(message)
         _key(node["id"], keys)
-        if not isinstance(node["type"], str) or node["type"] not in dict(NODE_TYPES):
+        if not isinstance(node["type"], str) or node["type"] not in dict(
+            node_types or NODE_TYPES,
+        ):
             message = "当前版本不支持此节点类型。"
             raise ValidationError(message)
         _coordinates(node["position"], {"x", "y"})
         data = node["data"]
-        if not isinstance(data, dict) or set(data) != {"label", "assignee_id"}:
+        if (
+            not isinstance(data, dict)
+            or not {"label", "assignee_id"} <= data.keys()
+            or set(data) - {"label", "assignee_id", "config"}
+            or not isinstance(data.get("config", {}), dict)
+        ):
             message = "节点属性不正确。"
             raise ValidationError(message)
         if (
@@ -114,8 +121,8 @@ def _coordinates(value: dict, names: set) -> None:
         raise ValidationError(message)
 
 
-def validate_graph(graph: dict, fields: dict) -> None:
-    validate_payload(graph)
+def validate_graph(graph: dict, fields: dict, node_types=None) -> None:
+    validate_payload(graph, node_types)
     nodes = {node["id"]: node for node in graph["nodes"]}
     starts = [key for key, node in nodes.items() if node["type"] == "start"]
     if len(starts) != 1 or not any(n["type"] == "end" for n in nodes.values()):

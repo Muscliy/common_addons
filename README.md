@@ -26,5 +26,6 @@ git submodule update --init --recursive
 | `custom_web_components` | 公共 UI 组件及列表布局偏好 |
 | `custom_web_echarts` | 按需加载的 ECharts 图表组件 |
 | `workflow_core` | 可视化工作流模板、版本发布、顺序/条件执行、人工待办及监控 |
+| `workflow_tier_validation` | 可选 OCA 分级审批节点、候选人快照、审批意见与安全隔离 |
 
 主题、本地化、公共 UI 和图表四个既有模块从主项目 `custom_addons/` 迁入，保留原有技术名称、模型、XML ID、资源 URL 和表名。主项目仍按原模块名称声明依赖；不要同时保留两份同名模块源码。`workflow_core` 是在本仓库新建的通用模块。

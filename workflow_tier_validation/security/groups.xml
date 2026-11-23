@@ -1,0 +1,10 @@
+<odoo>
+    <record id="group_approver" model="res.groups">
+        <field name="name">流程审批人员</field>
+        <field name="privilege_id" ref="workflow_core.privilege_workflow"/>
+        <field name="implied_ids" eval="[(4, ref('workflow_core.group_user'))]"/>
+    </record>
+    <record id="workflow_core.group_manager" model="res.groups">
+        <field name="implied_ids" eval="[(4, ref('group_approver'))]"/>
+    </record>
+</odoo>

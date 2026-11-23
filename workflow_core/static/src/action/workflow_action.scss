@@ -41,6 +41,7 @@
     .wf-state-done { border-left: 4px solid var(--wf-success); }
     .wf-state-waiting { border-left: 4px solid var(--wf-warning); }
     .wf-state-cancelled { border-left: 4px solid var(--wf-danger); }
+    .wf-state-rejected { border-left: 4px solid var(--wf-danger); }
     .wf-node-state { font-size: 12px; margin-top: 8px; }
     .form-label { margin-top: 16px; }
     .wf-rule-editor, .wf-rule-leaf { display: grid; gap: 8px; }

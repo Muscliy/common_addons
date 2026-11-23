@@ -7,7 +7,6 @@ from odoo.addons.workflow_core.services.access import (
     require_internal_write,
 )
 from odoo.addons.workflow_core.services.graph_validation import (
-    NODE_TYPES,
     validate_graph,
     validate_payload,
 )
@@ -102,7 +101,8 @@ class WorkflowVersion(models.Model):
             "revision": self.revision,
             "state": self.state,
             "graph": graph,
-            "node_types": NODE_TYPES,
+            "node_types": self._node_types(),
+            "node_options": self._node_options(),
             "fields": scalar_fields(model),
             "business_model": self.definition_id.model_id.sudo().model or "",
             "can_edit": self.state == "draft"
@@ -154,7 +154,8 @@ class WorkflowVersion(models.Model):
             self._lock_draft()
             if type(revision) is not int or revision != self.revision:
                 raise UserError(self.env._("草稿已被其他人修改, 请刷新后重试。"))
-            validate_payload(graph)
+            validate_payload(graph, self._node_types())
+            self._validate_configs(graph)
             self._check_assignees(graph)
             elevated = self.sudo()
             elevated.edge_ids.unlink()
@@ -172,6 +173,7 @@ class WorkflowVersion(models.Model):
                             "name": node["data"]["label"],
                             "assignee_id": node["data"]["assignee_id"] or False,
                             "position": node["position"],
+                            "config": node["data"].get("config", {}),
                         },
                     )
                     .id
@@ -210,7 +212,8 @@ class WorkflowVersion(models.Model):
     def action_validate(self) -> bool:
         self.ensure_one()
         canvas = self.get_canvas()
-        validate_graph(canvas["graph"], canvas["fields"])
+        validate_graph(canvas["graph"], canvas["fields"], self._node_types())
+        self._validate_configs(canvas["graph"])
         self._check_assignees(canvas["graph"])
         return True
 
@@ -230,3 +233,19 @@ class WorkflowVersion(models.Model):
             )
             self.definition_id._set_published_version(self)
         return self.get_canvas()
+
+    def _node_types(self) -> list:
+        return (
+            self.env["workflow.node"]._fields["kind"]._description_selection(self.env)
+        )
+
+    def _node_options(self) -> dict:
+        return {}
+
+    def _validate_configs(self, graph: dict) -> None:
+        for node in graph["nodes"]:
+            self.env["workflow.node"]._validate_config(
+                node["type"],
+                node["data"].get("config", {}),
+                self,
+            )

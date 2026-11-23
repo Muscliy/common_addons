@@ -12,7 +12,7 @@ const graph = {
     ], edges: [], viewport: { x: 0, y: 0, zoom: 1 },
 };
 
-async function mount(page, editable = true, initial = graph) {
+async function mount(page, editable = true, initial = graph, extras = {}) {
     await page.route('https://workflow.test/**', route => route.fulfill({
         contentType: 'text/html', body: '<div class="o_workflow_action" style="height:800px"><div id="root" style="height:100%"></div></div>',
     }));
@@ -25,14 +25,14 @@ async function mount(page, editable = true, initial = graph) {
         .wf-canvas{min-width:0}.wf-palette-node{display:block;margin:12px}
     ` });
     await page.addScriptTag({ content: readFileSync(resolve(root, 'static/lib/workflow_canvas.js'), 'utf8') });
-    await page.evaluate(({ editable, graph }) => {
+    await page.evaluate(({ editable, graph, extras }) => {
         window.dirty = 0;
         window.props = { canvas: { id: 1, revision: 0, graph, node_types: [['start', '开始'], ['task', '人工任务'], ['condition', '条件分支'], ['end', '结束']],
-            can_edit: editable, fields: { color: { string: '颜色', type: 'integer' } } },
+            can_edit: editable, fields: { color: { string: '颜色', type: 'integer' } }, ...extras },
             assignees: [{ id: 4, name: '负责人' }], onReady: get => window.getGraph = get,
-            onChange: () => window.dirty++, onComplete: () => {} };
+            onChange: () => window.dirty++, onComplete: () => {}, onDecision: (...args) => window.decisions = args };
         window.bridge = WorkflowCanvas.mount(document.querySelector('#root'), window.props);
-    }, { editable, graph: initial });
+    }, { editable, graph: initial, extras });
     await expect(page.locator('.react-flow__node')).toHaveCount(initial.nodes.length);
     await page.waitForFunction(() => typeof window.getGraph === 'function');
 }
@@ -84,4 +84,40 @@ test('palette supports keyboard addition and node deletion removes incident edge
     await expect(page.locator('.react-flow__node')).toHaveCount(4);
     await page.getByRole('button', { name: '删除节点', exact: true }).click();
     await expect(page.locator('.react-flow__node')).toHaveCount(3);
+});
+
+test('approval levels retain typed references and order after serialization', async ({ page }) => {
+    const initial = structuredClone(graph);
+    initial.nodes[1].type = 'approval';
+    initial.nodes[1].data.config = { levels: [{ kind: 'user', ref: 4 }] };
+    await mount(page, true, initial, {
+        node_types: [['start', '开始'], ['approval', '审批'], ['end', '结束']],
+        node_options: { approval: { users: [{ id: 4, name: '审批人员' }],
+            groups: [{ id: 7, name: '财务审批' }], fields: { user_id: { string: '负责人' } } } },
+    });
+    await page.locator('[data-id="task"]').click();
+    await page.getByLabel('第1级审批方式').selectOption('group');
+    await page.getByLabel('第1级审批人', { exact: true }).selectOption('7');
+    await page.getByRole('button', { name: '添加级次' }).click();
+    await page.getByLabel('第2级审批方式').selectOption('field');
+    await page.getByLabel('第2级审批人', { exact: true }).selectOption('user_id');
+    await page.getByRole('button', { name: '上移第2级' }).click();
+    const saved = await page.evaluate(() => window.getGraph());
+    expect(saved.nodes[1].data.config.levels).toEqual([
+        { kind: 'field', ref: 'user_id' }, { kind: 'group', ref: 7 },
+    ]);
+});
+
+test('monitor decisions carry fixed review ids and rejection requires a comment', async ({ page }) => {
+    await mount(page, false, graph, { instance_id: 9, approvals: [{ id: 12, name: '财务审批',
+        can_review: true, review_id: 31, reviews: [{ id: 31, sequence: 1, state: 'pending', reviewers: ['审批人员'] }] }] });
+    await expect(page.getByRole('button', { name: '拒绝', exact: true })).toBeDisabled();
+    await page.getByRole('button', { name: '通过', exact: true }).click();
+    expect(await page.evaluate(() => window.decisions)).toEqual([12, 31, 'approve', '']);
+    await page.getByLabel('审批意见').fill('金额需要修订');
+    await page.getByRole('button', { name: '拒绝', exact: true }).click();
+    expect(await page.evaluate(() => window.decisions)).toEqual([12, 31, 'reject', '金额需要修订']);
+    await page.evaluate(() => window.bridge.update({ ...window.props,
+        canvas: { ...window.props.canvas, approvals: window.props.canvas.approvals.map(a => ({ ...a, can_review: false })) } }));
+    await expect(page.getByRole('button', { name: '通过', exact: true })).toHaveCount(0);
 });

@@ -1,0 +1,18 @@
+<odoo>
+    <record id="approval_company" model="ir.rule">
+        <field name="name">Workflow approval: company</field><field name="model_id" ref="model_workflow_approval"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="approval_participant" model="ir.rule">
+        <field name="name">Workflow approval: participants</field><field name="model_id" ref="model_workflow_approval"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('workflow_core.group_viewer') else [('instance_id.participant_ids', 'in', [user.id])]</field>
+    </record>
+    <record id="review_workflow_scope" model="ir.rule">
+        <field name="name">Tier review: workflow scope</field><field name="model_id" ref="base_tier_validation.model_tier_review"/>
+        <field name="domain_force">[('model', '!=', 'workflow.approval')] if 'workflow_approval_id' not in user.env['tier.review']._fields else ([(1, '=', 1)] if user.has_group('workflow_core.group_viewer') else ['|', ('model', '!=', 'workflow.approval'), ('workflow_approval_id.instance_id.participant_ids', 'in', [user.id])])</field>
+    </record>
+    <record id="definition_workflow_scope" model="ir.rule">
+        <field name="name">Tier definition: workflow scope</field><field name="model_id" ref="base_tier_validation.model_tier_definition"/>
+        <field name="domain_force">[('model', '!=', 'workflow.approval')] if 'workflow_approval_id' not in user.env['tier.definition']._fields else ([(1, '=', 1)] if user.has_group('workflow_core.group_viewer') else ['|', ('model', '!=', 'workflow.approval'), ('workflow_approval_id.instance_id.participant_ids', 'in', [user.id])])</field>
+    </record>
+</odoo>
