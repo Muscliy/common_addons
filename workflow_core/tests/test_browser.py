@@ -25,13 +25,7 @@ class TestWorkflowBrowser(HttpCase):
             .with_user(user)
             .create({"name": "Browser workflow"})
         )
-        action = self.env["ir.actions.client"].create(
-            {
-                "name": "Workflow test",
-                "tag": "workflow_core.canvas",
-                "params": {"version_id": definition.version_ids.id},
-            },
-        )
+        action = self.env.ref("workflow_core.definitions")
         self.browser_js(
             f"/web?action={action.id}",
             r"""
@@ -52,6 +46,19 @@ class TestWorkflowBrowser(HttpCase):
                     await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
                     await wait(() => !document.querySelector('.wf-loading'), `${label} finished`);
                 };
+                const templateCard = () => [...document.querySelectorAll('.o_kanban_view .o_kanban_record')]
+                    .find(record => record.textContent.includes('Browser workflow'));
+                await wait(templateCard, 'default template kanban');
+                if (!templateCard().textContent.includes('未发布')) {
+                    throw new Error('The draft template card must show its publication status');
+                }
+                document.querySelector('.o_switch_view.o_list').click();
+                await wait(() => document.querySelector('.o_list_view'), 'list view switch');
+                document.querySelector('.o_switch_view.o_kanban').click();
+                await wait(templateCard, 'return to kanban');
+                const openCanvas = [...templateCard().querySelectorAll('button')]
+                    .find(el => el.textContent.trim() === '打开画布');
+                openCanvas.click();
                 await click('插入示例');
                 if (!/\/workflow-designer\/[0-9]+$/.test(location.pathname)) {
                     throw new Error('Designer URL is missing the version ID');
