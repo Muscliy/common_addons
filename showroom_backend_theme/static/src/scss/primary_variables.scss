@@ -4,7 +4,8 @@ $o-community-color: #1677ff;
 $o-brand-odoo: #1677ff;
 $o-brand-primary: #1677ff;
 $o-action: #1677ff;
-$o-main-link-color: #0958d9;
+$o-webclient-color-scheme: bright !default;
+$o-main-link-color: if($o-webclient-color-scheme == dark, #85b8ff, #0958d9);
 $o-input-border-required: #1677ff;
 
 // A semantic status for results that exceed their target.

@@ -19,6 +19,23 @@ class TestSidebarTheme(unittest.TestCase):
             module_path / 'static/src/webclient/showroom_sidebar.xml',
         ))
 
+    def test_dark_shell_compiles_with_readable_navigation_and_preserved_brand(self):
+        module_path = Path(__file__).resolve().parents[1]
+        css = sass.compile(string=(
+            (module_path / 'static/src/scss/dark_variables.scss').read_text()
+            + (module_path / 'static/src/webclient/showroom_theme.scss').read_text()
+            + (module_path / 'static/src/webclient/sidebar_entries.scss').read_text()
+        ))
+        for selector in ('.o_main_navbar', '.o_showroom_sidebar'):
+            rule = re.search(r'(?m)^' + re.escape(selector) + r'\s*\{([^{}]*)\}', css)
+            self.assertIn('background: #212832;', rule[1])
+            self.assertIn('color: #dce2ea;', rule[1])
+        self.assertIn('--btn-bg: #1677ff;', css)
+        self.assertIn('background: #293d48;', css)
+        self.assertNotIn('showroom-color(', css)
+        self.assertNotIn('showroom-color(', self.css)
+        self.assertIn('--ListRenderer-thead-bg-color: #233b5c;', css)
+
     def test_navigation_uses_white_surfaces_and_dark_text(self):
         navbar = re.search(r'(?m)^\.o_main_navbar\s*\{([^{}]*)\}', self.css)
         sidebar = re.search(r'(?m)^\.o_showroom_sidebar\s*\{([^{}]*)\}', self.css)

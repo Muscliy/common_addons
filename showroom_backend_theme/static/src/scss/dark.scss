@@ -1,0 +1,21 @@
+// Native views compile with dark variables; shared dashboard tokens follow them.
+:root {
+    color-scheme: dark;
+}
+
+// Discuss adds its own navbar surface; keep the shared navigation consistent.
+.o_web_client.o_mail_discuss .o_main_navbar {
+    background-color: $o-view-background-color;
+}
+
+.modal-dialog .o_form_view .o_form_sheet_bg {
+    background-color: $o-view-background-color;
+}
+
+.o_cwc_dashboard {
+    --dashboard-page: #{$o-webclient-background-color};
+    --dashboard-surface: #{$o-view-background-color};
+    --dashboard-line: #{$o-gray-300};
+    --dashboard-ink: #{$o-main-text-color};
+    --dashboard-muted: #{$o-main-color-muted};
+}

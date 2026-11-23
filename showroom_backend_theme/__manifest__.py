@@ -1,6 +1,6 @@
 {
     "name": "泰缘极主题",
-    "version": '19.0.1.5.0',
+    "version": '19.0.1.6.0',
     "category": "Themes/Backend",
     "summary": "泰缘极后台主题",
     "author": "leehudev",
@@ -33,6 +33,8 @@
             ),
         ],
         "web.assets_backend": [
+            "showroom_backend_theme/static/src/webclient/theme_switcher.js",
+            "showroom_backend_theme/static/src/webclient/theme_switcher.xml",
             "showroom_backend_theme/static/src/webclient/sidebar_entries.js",
             "showroom_backend_theme/static/src/webclient/sidebar_bookmark_menu.js",
             "showroom_backend_theme/static/src/webclient/sidebar_bookmark_menu.xml",
@@ -54,8 +56,13 @@
             "showroom_backend_theme/static/src/webclient/showroom_brand_guard.js",
         ],
         "web.assets_unit_tests": [
+            "showroom_backend_theme/static/tests/theme_switcher.test.js",
             "showroom_backend_theme/static/tests/sidebar_entries.test.js",
             "showroom_backend_theme/static/tests/showroom_sidebar.test.js",
+        ],
+        "web.assets_web_dark": [
+            ("prepend", "showroom_backend_theme/static/src/scss/dark_variables.scss"),
+            "showroom_backend_theme/static/src/scss/dark.scss",
         ],
     },
     "installable": True,

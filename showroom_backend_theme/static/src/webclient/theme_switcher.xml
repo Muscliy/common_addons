@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="showroom_backend_theme.ThemeSwitcher">
+        <div class="o_showroom_theme_switcher d-flex align-items-center">
+            <Dropdown>
+                <button type="button" class="o_showroom_settings_button btn btn-link"
+                    title="主题" aria-label="切换主题">
+                    <i t-att-class="scheme === 'dark' ? 'fa fa-moon-o' : 'fa fa-sun-o'" aria-hidden="true"/>
+                </button>
+                <t t-set-slot="content">
+                    <DropdownItem onSelected="() => this.selectScheme('light')"
+                        attrs="{ role: 'menuitemradio', 'aria-checked': scheme === 'light' ? 'true' : 'false' }">
+                        <i class="fa fa-sun-o me-2" aria-hidden="true"/>Light
+                        <i t-if="scheme === 'light'" class="fa fa-check ms-3" aria-hidden="true"/>
+                    </DropdownItem>
+                    <DropdownItem onSelected="() => this.selectScheme('dark')"
+                        attrs="{ role: 'menuitemradio', 'aria-checked': scheme === 'dark' ? 'true' : 'false' }">
+                        <i class="fa fa-moon-o me-2" aria-hidden="true"/>Dark
+                        <i t-if="scheme === 'dark'" class="fa fa-check ms-3" aria-hidden="true"/>
+                    </DropdownItem>
+                </t>
+            </Dropdown>
+        </div>
+    </t>
+</templates>

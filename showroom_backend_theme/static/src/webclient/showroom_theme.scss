@@ -1,16 +1,67 @@
+$o-webclient-color-scheme: bright !default;
+
+// Shared shell colors keep the Light palette and compile for the Dark bundle.
+@function showroom-color($light) {
+    $dark: (
+        #ffffff: #212832,
+        #1677ff: #85b8ff,
+        #0958d9: #85b8ff,
+        #f8f9fa: #161b22,
+        #edf4f6: #293d48,
+        #078da3: #60cfdf,
+        #35445c: #dce2ea,
+        #e7eaee: #354150,
+        #20242a: #edf1f7,
+        #667085: #a5b2c2,
+        #344054: #dce2ea,
+        #475467: #c5cdd8,
+        #dbe3ec: #354150,
+        #e1e8f0: #354150,
+        #e4e7ec: #354150,
+        #d0d5dd: #526173,
+        #edf0f3: #354150,
+        #fbfcfd: #1b222c,
+        #fafbfd: #1b222c,
+        #f2f4f7: #293443,
+        #eef5ff: #233b5c,
+        #f5f9ff: #233b5c,
+        #d5ebfb: #233b5c,
+        #c7dff2: #354150,
+        #ccd5dc: #526173,
+        #9fc4fb: #5277a6,
+        #b9d5fa: #5277a6,
+        #b8c0cc: #8190a2,
+        #98a2b3: #8190a2,
+        #edf8f2: #193a2b,
+        #fff7df: #3c321d,
+        #fdf0f0: #3d252a,
+        #fffafa: #3d252a,
+        #cdebd9: #32694a,
+        #f1dfaa: #766039,
+        #f3cccc: #79424b,
+        #178a50: #65d69b,
+        #9a6700: #f3ce78,
+        #c43d3d: #ff9292,
+    );
+    @if $o-webclient-color-scheme == dark and map-has-key($dark, $light) {
+        @return map-get($dark, $light);
+    }
+    @return $light;
+}
+
 $showroom-sidebar-width: 216px;
 $showroom-sidebar-collapsed-width: 68px;
 $showroom-navbar-height: 64px;
 $showroom-brand: #1677ff;
-$showroom-sidebar: #ffffff;
-$showroom-sidebar-hover: #edf4f6;
-$showroom-navigation-accent: #078da3;
-$showroom-navigation-text: #35445c;
-$showroom-surface: #ffffff;
-$showroom-page: #f8f9fa;
-$showroom-border: #e7eaee;
-$showroom-text: #20242a;
-$showroom-muted: #667085;
+$showroom-sidebar: showroom-color(#ffffff);
+$showroom-sidebar-hover: showroom-color(#edf4f6);
+$showroom-navigation-accent: showroom-color(#078da3);
+$showroom-navigation-text: showroom-color(#35445c);
+$showroom-surface: showroom-color(#ffffff);
+$showroom-page: showroom-color(#f8f9fa);
+$showroom-border: showroom-color(#e7eaee);
+$showroom-text: showroom-color(#20242a);
+$showroom-muted: showroom-color(#667085);
 $showroom-success: #178a50;
 $showroom-warning: #9a6700;
 $showroom-danger: #c43d3d;
@@ -123,7 +174,7 @@ $showroom-danger: #c43d3d;
         margin-right: 10px;
         overflow: hidden;
         place-items: center;
-        background: #fff;
+        background: $showroom-surface;
         border-radius: 4px;
 
         img {
@@ -283,7 +334,7 @@ $showroom-danger: #c43d3d;
         overflow-x: hidden;
         overflow-y: auto;
         scrollbar-width: thin;
-        scrollbar-color: #ccd5dc transparent;
+        scrollbar-color: showroom-color(#ccd5dc) transparent;
     }
 
     .o_showroom_app_row {
@@ -389,8 +440,8 @@ $showroom-danger: #c43d3d;
         max-height: calc(100vh - #{$showroom-navbar-height} - 24px);
         padding: 16px;
         color: $showroom-navigation-text;
-        background: #fff;
-        border: 1px solid #dbe3ec;
+        background: $showroom-surface;
+        border: 1px solid showroom-color(#dbe3ec);
         border-radius: 12px;
         box-shadow: 0 16px 32px rgba(25, 44, 66, 0.17);
         opacity: 0;
@@ -433,8 +484,8 @@ $showroom-danger: #c43d3d;
         width: 200px;
         min-width: 0;
         padding: 14px 16px;
-        background: #fafbfd;
-        border: 1px solid #e1e8f0;
+        background: showroom-color(#fafbfd);
+        border: 1px solid showroom-color(#e1e8f0);
         border-radius: 8px;
     }
 
@@ -639,7 +690,7 @@ $showroom-danger: #c43d3d;
 
     color: #fff;
     background: $showroom-brand;
-    border-color: $showroom-brand;
+    border-color: showroom-color($showroom-brand);
 
     &:hover,
     &:focus {
@@ -657,37 +708,37 @@ $showroom-danger: #c43d3d;
 }
 
 .btn-secondary {
-    color: #344054;
+    color: showroom-color(#344054);
     background: $showroom-surface;
-    border-color: #d0d5dd;
+    border-color: showroom-color(#d0d5dd);
 
     &:hover,
     &:focus {
-        color: $showroom-brand;
-        background: #f5f9ff;
-        border-color: #9fc4fb;
+        color: showroom-color($showroom-brand);
+        background: showroom-color(#f5f9ff);
+        border-color: showroom-color(#9fc4fb);
     }
 
     &:active,
     &.active {
-        color: #0958d9;
-        background: #d5ebfb;
-        border-color: $showroom-brand;
+        color: showroom-color(#0958d9);
+        background: showroom-color(#d5ebfb);
+        border-color: showroom-color($showroom-brand);
     }
 }
 
 .btn-outline-primary {
-    color: $showroom-brand;
+    color: showroom-color($showroom-brand);
     background: $showroom-surface;
-    border-color: $showroom-brand;
+    border-color: showroom-color($showroom-brand);
 
     &:hover,
     &:focus,
     &:active,
     &.active {
-        color: #0958d9;
-        background: #eef5ff;
-        border-color: #0958d9;
+        color: showroom-color(#0958d9);
+        background: showroom-color(#eef5ff);
+        border-color: showroom-color(#0958d9);
     }
 }
 
@@ -712,14 +763,14 @@ $showroom-danger: #c43d3d;
 }
 
 .btn-light {
-    color: #475467;
+    color: showroom-color(#475467);
     background: transparent;
     border-color: transparent;
 
     &:hover,
     &:focus {
-        color: $showroom-brand;
-        background: #eef5ff;
+        color: showroom-color($showroom-brand);
+        background: showroom-color(#eef5ff);
         border-color: transparent;
     }
 }
@@ -729,24 +780,24 @@ $showroom-danger: #c43d3d;
     .form-control,
     .form-select,
     .o_select_menu .form-select {
-        color: #344054;
+        color: showroom-color(#344054);
         background-color: $showroom-surface;
-        border-color: #d0d5dd;
+        border-color: showroom-color(#d0d5dd);
 
         &:hover:not(:focus):not(:focus-visible):not(:disabled):not([readonly]) {
-            border-color: #98a2b3;
+            border-color: showroom-color(#98a2b3);
         }
 
         &:focus,
         &:focus-visible {
-            border-color: $showroom-brand;
+            border-color: showroom-color($showroom-brand);
         }
 
         &:disabled,
         &[readonly] {
-            color: #98a2b3;
-            background-color: #f2f4f7;
-            border-color: #e4e7ec;
+            color: showroom-color(#98a2b3);
+            background-color: showroom-color(#f2f4f7);
+            border-color: showroom-color(#e4e7ec);
         }
     }
 
@@ -755,7 +806,7 @@ $showroom-danger: #c43d3d;
         .form-control,
         .form-select {
             color: #8f2f2f;
-            background-color: #fffafa;
+            background-color: showroom-color(#fffafa);
             border-color: $showroom-danger;
 
         }
@@ -763,15 +814,15 @@ $showroom-danger: #c43d3d;
 }
 
 .form-check-input {
-    border-color: #b8c0cc;
+    border-color: showroom-color(#b8c0cc);
 
     &:focus {
-        border-color: $showroom-brand;
+        border-color: showroom-color($showroom-brand);
     }
 
     &:checked {
-        background-color: $showroom-brand;
-        border-color: $showroom-brand;
+        background-color: showroom-color($showroom-brand);
+        border-color: showroom-color($showroom-brand);
     }
 }
 
@@ -792,7 +843,7 @@ $showroom-danger: #c43d3d;
 }
 
 .o_list_renderer {
-    --ListRenderer-thead-bg-color: #d5ebfb;
+    --ListRenderer-thead-bg-color: #{showroom-color(#d5ebfb)};
     --ListRenderer-thead-padding-y: 10px;
 
     // Odoo writes a calculated pixel width on list tables. Sparse custom lists
@@ -804,12 +855,12 @@ $showroom-danger: #c43d3d;
     }
 
     .o_list_table {
-        color: #344054;
+        color: showroom-color(#344054);
         font-size: 14px;
 
         thead th {
-            color: #344054;
-            border-bottom-color: #c7dff2;
+            color: showroom-color(#344054);
+            border-bottom-color: showroom-color(#c7dff2);
             font-size: 13px;
             font-weight: 600;
             letter-spacing: 0.01em;
@@ -817,11 +868,11 @@ $showroom-danger: #c43d3d;
 
         tbody > tr {
             background: $showroom-surface;
-            border-bottom-color: #edf0f3;
+            border-bottom-color: showroom-color(#edf0f3);
 
             &:hover,
             &.table-info {
-                --table-bg-state: #eef5ff;
+                --table-bg-state: #{showroom-color(#eef5ff)};
             }
 
             > td {
@@ -831,7 +882,7 @@ $showroom-danger: #c43d3d;
 
         tfoot {
             color: $showroom-muted;
-            background: #fbfcfd;
+            background: showroom-color(#fbfcfd);
         }
     }
 }
@@ -845,7 +896,7 @@ $showroom-danger: #c43d3d;
         background: $showroom-surface;
 
         &:hover {
-            border-color: #b9d5fa;
+            border-color: showroom-color(#b9d5fa);
         }
     }
 }
@@ -866,7 +917,7 @@ $showroom-danger: #c43d3d;
 
     .o_inner_group > tbody > tr > td.o_td_label,
     .o_group .o_form_label {
-        color: #344054;
+        color: showroom-color(#344054);
     }
 
     .o_group_name {
@@ -893,13 +944,13 @@ $showroom-danger: #c43d3d;
 
         &:hover,
         &:focus {
-            color: $showroom-brand;
+            color: showroom-color($showroom-brand);
         }
 
         &.active,
         &.active:hover,
         &.active:focus {
-            color: $showroom-brand;
+            color: showroom-color($showroom-brand);
             background: transparent;
 
         }
@@ -908,34 +959,34 @@ $showroom-danger: #c43d3d;
 
 .o_pager {
     .btn {
-        color: #475467;
+        color: showroom-color(#475467);
         background: $showroom-surface;
         border-color: $showroom-border;
 
         &:hover:not(:disabled) {
-            color: $showroom-brand;
-            background: #eef5ff;
-            border-color: #9fc4fb;
+            color: showroom-color($showroom-brand);
+            background: showroom-color(#eef5ff);
+            border-color: showroom-color(#9fc4fb);
         }
     }
 }
 
 .alert-success {
-    color: $showroom-success;
-    background: #edf8f2;
-    border-color: #cdebd9;
+    color: showroom-color(#178a50);
+    background: showroom-color(#edf8f2);
+    border-color: showroom-color(#cdebd9);
 }
 
 .alert-warning {
-    color: $showroom-warning;
-    background: #fff7df;
-    border-color: #f1dfaa;
+    color: showroom-color(#9a6700);
+    background: showroom-color(#fff7df);
+    border-color: showroom-color(#f1dfaa);
 }
 
 .alert-danger {
-    color: $showroom-danger;
-    background: #fdf0f0;
-    border-color: #f3cccc;
+    color: showroom-color(#c43d3d);
+    background: showroom-color(#fdf0f0);
+    border-color: showroom-color(#f3cccc);
 }
 
 .text-bg-success,
@@ -993,7 +1044,7 @@ $showroom-danger: #c43d3d;
 }
 
 .popover-body {
-    color: #475467;
+    color: showroom-color(#475467);
 }
 
 .offcanvas {
@@ -1052,4 +1103,9 @@ $showroom-danger: #c43d3d;
     .o_showroom_sidebar .o_showroom_menu_card details::details-content {
         transition: none;
     }
+}
+
+.o_showroom_theme_switcher button {
+    min-width: 36px;
+    min-height: 36px;
 }
