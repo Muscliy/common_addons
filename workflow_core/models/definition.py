@@ -34,7 +34,7 @@ class WorkflowDefinition(models.Model):
     model_id = fields.Many2one(
         "ir.model",
         string="业务模型",
-        domain="[('model', 'in', ['res.partner'])]",
+        domain=lambda self: [("model", "in", sorted(self._allowed_business_models()))],
     )
     version_ids = fields.One2many("workflow.version", "definition_id")
     published_version_id = fields.Many2one(
@@ -59,7 +59,10 @@ class WorkflowDefinition(models.Model):
     )
 
     def _allowed_business_models(self) -> set[str]:
-        return {"res.partner"}
+        models = {"res.partner"}
+        if "hr.expense" in self.env:
+            models.add("hr.expense")
+        return models
 
     @api.constrains("model_id", "company_id")
     def _check_scope(self):

@@ -115,6 +115,10 @@ class WorkflowVersion(models.Model):
             if self.definition_id.model_id
             else None
         )
+        condition_fields = scalar_fields(model)
+        if model is not None and model._name == "hr.expense":
+            if "total_amount" in condition_fields:
+                condition_fields["total_amount"]["string"] = self.env._("报销金额")
         return {
             "id": self.id,
             "title": self.display_name,
@@ -123,7 +127,7 @@ class WorkflowVersion(models.Model):
             "graph": graph,
             "node_types": self._node_types(),
             "node_options": self._node_options(),
-            "fields": scalar_fields(model),
+            "fields": condition_fields,
             "business_model": self.definition_id.model_id.sudo().model or "",
             "can_edit": self.state == "draft"
             and self.env.user.has_group("workflow_core.group_designer"),

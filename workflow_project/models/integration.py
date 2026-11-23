@@ -1,4 +1,4 @@
-from odoo import fields, models
+from odoo import models
 
 from odoo.addons.workflow_project.services.configuration import eligible
 from odoo.addons.workflow_project.services.synchronization import close_links
@@ -6,10 +6,6 @@ from odoo.addons.workflow_project.services.synchronization import close_links
 
 class WorkflowDefinition(models.Model):
     _inherit = "workflow.definition"
-
-    model_id = fields.Many2one(
-        domain="[('model', 'in', ['res.partner', 'project.task'])]",
-    )
 
     def _allowed_business_models(self) -> set[str]:
         return super()._allowed_business_models() | {"project.task"}
