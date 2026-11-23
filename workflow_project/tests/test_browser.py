@@ -10,7 +10,7 @@ class TestProjectBrowser(ProjectCase, HttpCase):
         action = self.env["ir.actions.client"].create(
             {
                 "name": "Project workflow browser",
-                "tag": "workflow_core.canvas",
+                "tag": "workflow_core.monitor",
                 "params": {"instance_id": instance.id},
             },
         )

@@ -53,6 +53,9 @@ class TestWorkflowBrowser(HttpCase):
                     await wait(() => !document.querySelector('.wf-loading'), `${label} finished`);
                 };
                 await click('插入示例');
+                if (!/\/workflow-designer\/[0-9]+$/.test(location.pathname)) {
+                    throw new Error('Designer URL is missing the version ID');
+                }
                 await wait(() => document.querySelectorAll('.react-flow__node').length === 3, 'nodes');
                 const handle = document.querySelector('[data-id="start"] .react-flow__handle.source');
                 const bounds = handle.getBoundingClientRect();
@@ -66,6 +69,10 @@ class TestWorkflowBrowser(HttpCase):
                 const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
                 setter.call(name, '浏览器确认任务');
                 name.dispatchEvent(new Event('input', { bubbles: true }));
+                button('流程模板').click();
+                await wait(() => document.querySelector('.modal button[data-hotkey="x"]'), 'unsaved changes prompt');
+                document.querySelector('.modal button[data-hotkey="x"]').click();
+                await wait(() => !document.querySelector('.modal') && button('保存'), 'stay on canvas');
                 await click('保存');
                 await wait(() => !button('保存').disabled && !document.querySelector('[role=alert]'), 'save');
                 await click('校验');
@@ -75,6 +82,9 @@ class TestWorkflowBrowser(HttpCase):
                 if (button('保存')) throw new Error('Published canvas remained editable');
                 await click('启动流程');
                 await wait(() => button('完成任务'), 'task created');
+                if (!/\/workflow-monitor\/[0-9]+$/.test(location.pathname)) {
+                    throw new Error('Monitor URL is missing the instance ID');
+                }
                 await click('完成任务');
                 await wait(() => document.querySelector('.wf-heading').textContent.includes('已完成'), 'completion');
                 if (button('完成任务')) throw new Error('Completed task remained actionable');
@@ -90,3 +100,32 @@ class TestWorkflowBrowser(HttpCase):
         )
         self.assertEqual(instance.state, "done")
         self.assertEqual(instance.task_ids.name, "浏览器确认任务")
+        for path, label, view in (
+            (
+                f"/odoo/workflow-designer/{instance.version_id.id}",
+                "流程模板",
+                ".o_form_view",
+            ),
+            (f"/odoo/workflow-monitor/{instance.id}", "流程实例", ".o_list_view"),
+        ):
+            self.browser_js(
+                path,
+                f"""
+                (async () => {{
+                    const parent = [...document.querySelectorAll('.wf-heading button')]
+                        .find(button => button.textContent.trim() === '{label}');
+                    parent.click();
+                    for (let i = 0; i < 400; i++) {{
+                        if (document.querySelector('{view}') && !document.querySelector('.o_workflow_action')) {{
+                            console.log('test successful');
+                            return;
+                        }}
+                        await new Promise(resolve => setTimeout(resolve, 50));
+                    }}
+                    throw new Error('Could not return from the workflow breadcrumb');
+                }})();
+                """,
+                "document.querySelectorAll('.react-flow__node').length === 3",
+                login=user.login,
+                timeout=60,
+            )

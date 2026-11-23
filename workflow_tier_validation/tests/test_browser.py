@@ -9,7 +9,7 @@ class TestApprovalBrowser(ApprovalCase, HttpCase):
         return self.env["ir.actions.client"].create(
             {
                 "name": "Approval browser test",
-                "tag": "workflow_core.canvas",
+                "tag": "workflow_core.monitor",
                 "params": {"instance_id": instance.id},
             },
         )
