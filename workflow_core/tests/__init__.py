@@ -1,6 +1,7 @@
 from . import (
     test_browser,
     test_concurrency,
+    test_definition_code,
     test_graph,
     test_parallel,
     test_parallel_browser,

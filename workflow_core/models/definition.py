@@ -18,7 +18,7 @@ class WorkflowDefinition(models.Model):
     _check_company_auto = True
 
     name = fields.Char(required=True)
-    code = fields.Char(required=True, default=lambda self: uuid.uuid4().hex)
+    code = fields.Char(required=True, copy=False)
     company_id = fields.Many2one(
         "res.company",
         required=True,
@@ -65,6 +65,25 @@ class WorkflowDefinition(models.Model):
             ):
                 raise ValidationError(self.env._("业务模型未注册。"))
 
+    def _assign_codes(self, vals_list):
+        default_code = self.default_get(["code"]).get("code")
+        values = [dict(vals, code=vals.get("code", default_code)) for vals in vals_list]
+        reserved = {vals["code"] for vals in values if isinstance(vals["code"], str)}
+        sequence = self.env.ref("workflow_core.sequence_workflow_definition").sudo()
+        templates = self.sudo().with_context(active_test=False)
+        for vals in values:
+            if vals["code"]:
+                continue
+            while True:
+                code = sequence.next_by_id()
+                if code not in reserved and not templates.search_count(
+                    [("code", "=", code)],
+                ):
+                    vals["code"] = code
+                    reserved.add(code)
+                    break
+        return values
+
     @api.model_create_multi
     def create(self, vals_list):
         require_group(self, "group_designer")
@@ -74,7 +93,7 @@ class WorkflowDefinition(models.Model):
         records = super().create(
             [
                 dict(vals, **dict.fromkeys(self._activation_fields(), False))
-                for vals in vals_list
+                for vals in self._assign_codes(vals_list)
             ],
         )
         for record in records:

@@ -19,7 +19,7 @@
                 <sheet>
                     <widget name="web_ribbon" title="已归档" bg_color="text-bg-warning" invisible="active"/>
                     <field name="active" invisible="1"/>
-                    <group><field name="name" string="流程名称"/><field name="code" string="流程编码"/><field name="model_id" groups="workflow_core.group_designer" options="{'no_create': True}"/>
+                    <group><field name="name" string="流程名称"/><field name="code" string="流程编码" required="0" placeholder="留空自动生成"/><field name="model_id" groups="workflow_core.group_designer" options="{'no_create': True}"/>
                         <field name="starter_group_ids" widget="many2many_tags" groups="workflow_core.group_designer" options="{'no_create': True}"/>
                         <field name="company_id" string="所属公司" groups="base.group_multi_company"/><field name="published_version_id" string="当前发布版本"/>
                         <field name="version_activated_by" string="最近启用人" invisible="not version_activated_by"/>
