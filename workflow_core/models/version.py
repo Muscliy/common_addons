@@ -135,7 +135,8 @@ class WorkflowVersion(models.Model):
             and self.env.user.has_group("workflow_core.group_publisher"),
             "can_start": self.state == "published"
             and self.definition_id.published_version_id == self
-            and self.env.user.has_group("workflow_core.group_executor"),
+            and self.env.user.has_group("workflow_core.group_executor")
+            and self.definition_id._starter_department_allowed(),
             "definition_id": self.definition_id.id,
             "assignees": [
                 {"id": u.id, "name": u.name} for u in self.node_ids.assignee_id
