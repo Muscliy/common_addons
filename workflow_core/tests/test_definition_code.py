@@ -1,3 +1,4 @@
+from odoo.exceptions import ValidationError
 from odoo.tests import HttpCase, tagged
 
 from .common import WorkflowCase
@@ -23,6 +24,19 @@ class TestDefinitionCode(WorkflowCase, HttpCase):
         self.assertEqual(manual.code, manual_code)
         self.assertEqual(second.code, f"FLOW-{next_number + 3}")
         self.assertEqual(first.copy().code, f"FLOW-{next_number + 4}")
+
+    def test_custom_code_format_on_create_and_edit(self):
+        templates = self.env["workflow.definition"].with_user(self.designer)
+        template = templates.create({"name": "自定义编码", "code": "ABC123"})
+        template.code = "Sales-01"
+        self.assertEqual(template.code, "Sales-01")
+        for invalid in ("采购1", "SALES 1", "SALES_1", "SALES/1", "-FLOW", "FLOW-"):
+            with self.subTest(code=invalid):
+                with self.assertRaises(ValidationError):
+                    templates.create({"name": "无效编码", "code": invalid})
+                with self.assertRaises(ValidationError):
+                    template.code = invalid
+        self.assertEqual(template.code, "Sales-01")
 
     def test_form_saves_without_entering_a_code(self):
         self.browser_js(
