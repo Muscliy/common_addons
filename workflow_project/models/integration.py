@@ -1,4 +1,4 @@
-from odoo import models
+from odoo import api, models
 
 from odoo.addons.workflow_project.services.configuration import eligible
 from odoo.addons.workflow_project.services.synchronization import close_links
@@ -80,6 +80,7 @@ class WorkflowInstance(models.Model):
             canvas["project_tasks"].append(
                 {
                     "id": link.id,
+                    "activation_id": link.node_instance_id.id,
                     "name": link.name,
                     "state": link.state,
                     "task_name": task.name,
@@ -96,6 +97,22 @@ class WorkflowInstance(models.Model):
                 },
             )
         return canvas
+
+    @api.model
+    def action_todo_approvals(self) -> dict:
+        action_name = "workflow_tier_validation.my_approvals"
+        action = self.env.ref(action_name, raise_if_not_found=False)
+        approver_group = "workflow_tier_validation.group_approver"
+        if action and self.env.user.has_group(approver_group):
+            return self.env["ir.actions.actions"]._for_xml_id(action_name)
+        return {
+            "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "type": "info",
+                "message": self.env._("当前没有可查看的流程审批。"),
+            },
+        }
 
     def _close_open_work(self) -> None:
         super()._close_open_work()

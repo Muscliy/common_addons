@@ -67,6 +67,7 @@ class WorkflowInstance(models.Model):
                     "id": approval.id,
                     "name": approval.name,
                     "node": approval.node_instance_id.node_id.key,
+                    "activation_id": approval.node_instance_id.id,
                     "state": approval.state,
                     "reviews": [
                         {
@@ -75,6 +76,7 @@ class WorkflowInstance(models.Model):
                             "state": r.status,
                             "reviewers": r.reviewer_ids.mapped("name"),
                             "actor": r.done_by.name or "",
+                            "reviewed_at": fields.Datetime.to_string(r.reviewed_date),
                             "comment": r.comment or "",
                         }
                         for r in reviews

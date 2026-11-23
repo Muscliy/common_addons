@@ -16,7 +16,10 @@ class TestApprovalBrowser(ApprovalCase, HttpCase):
 
     def test_two_users_approve_sequentially_in_monitor(self):
         instance, approval = self.begin()
-        action = self.env.ref("workflow_tier_validation.my_approvals")
+        action = self.env.ref(
+            "workflow_project.todo_approvals",
+            raise_if_not_found=False,
+        ) or self.env.ref("workflow_tier_validation.my_approvals")
         code = r"""
             (async () => {
                 const wait = async condition => {
@@ -31,8 +34,15 @@ class TestApprovalBrowser(ApprovalCase, HttpCase):
                 const button = () => [...document.querySelectorAll('.wf-runtime button')].find(el => el.textContent === '通过');
                 await wait(() => button() && !button().disabled);
                 if (document.querySelector('.react-flow')) throw new Error('Approval opened the graph');
+                if (document.querySelectorAll('.wf-timeline .wf-progress-person').length !== 3) {
+                    throw new Error('The timeline must show the starter and both approval people');
+                }
                 button().click();
                 await wait(() => !document.querySelector('.wf-loading') && !button());
+                await wait(() => document.querySelector('[aria-label="审批记录"] tbody tr'));
+                if (!document.querySelector('[aria-label="审批记录"] tbody tr').textContent.includes('已通过')) {
+                    throw new Error('The decision must appear in the approval history');
+                }
                 if (document.querySelector('.o_workflow_action [role=alert]')) throw new Error('Approval failed');
                 console.log('test successful');
             })();

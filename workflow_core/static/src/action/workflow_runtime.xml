@@ -1,94 +1,118 @@
 <templates xml:space="preserve">
     <t t-name="workflow_core.Runtime">
         <main class="wf-runtime">
-            <div class="wf-runtime-columns">
-                <div>
-                    <section class="wf-runtime-card" aria-label="当前办理">
-                        <h2>当前办理</h2>
-                        <t t-if="approvals.length || pendingTasks.length || projectTasks.length">
-                            <t t-foreach="approvals" t-as="approval" t-key="approvalKey(approval)">
-                                <article class="wf-task">
-                                    <h3 t-esc="approval.name"/>
-                                    <t t-call="workflow_core.RuntimeReviewRows"/>
-                                    <div t-if="approval.can_review" class="wf-runtime-actions">
-                                        <textarea class="form-control" aria-label="审批意见" placeholder="审批意见（拒绝时必填）"
-                                                  maxlength="4000" t-att-disabled="props.busy" t-model="comments[approvalKey(approval)]"/>
-                                        <div class="d-flex gap-2 mt-2">
-                                            <button type="button" class="btn btn-primary" t-att-disabled="props.busy"
-                                                    t-on-click="() => this.handleDecision(approval, 'approve')">通过</button>
-                                            <button type="button" class="btn btn-outline-danger"
-                                                    t-att-disabled="props.busy || !comments[approvalKey(approval)]?.trim()"
-                                                    t-on-click="() => this.handleDecision(approval, 'reject')">拒绝</button>
-                                        </div>
-                                    </div>
-                                </article>
-                            </t>
-                            <article t-foreach="pendingTasks" t-as="task" t-key="task.id" class="wf-task">
-                                <h3 t-esc="task.name"/>
-                                <p class="text-muted mb-0" t-esc="task.assignee"/>
-                                <div t-if="task.can_complete" class="wf-runtime-actions">
-                                    <textarea class="form-control" aria-label="办理意见" placeholder="办理意见" maxlength="4000"
-                                              t-att-disabled="props.busy" t-model="comments['task-' + task.id]"/>
-                                    <button type="button" class="btn btn-primary mt-2" t-att-disabled="props.busy"
-                                            t-on-click="() => props.complete(task.id, comments['task-' + task.id] || '')">完成任务</button>
-                                </div>
-                            </article>
-                            <article t-foreach="projectTasks" t-as="task" t-key="task.id" class="wf-task">
-                                <h3 t-esc="task.name"/>
-                                <p class="text-muted mb-0"><t t-esc="task.task_name"/> · <t t-esc="task.task_state"/></p>
-                                <p class="text-muted mb-0" t-esc="task.assignees.join('、')"/>
-                                <button type="button" class="btn btn-secondary mt-2" t-att-disabled="props.busy"
-                                        t-on-click="() => props.projectOpen(task.id)">打开项目任务</button>
-                                <div t-if="task.can_complete" class="wf-runtime-actions">
-                                    <textarea class="form-control" aria-label="项目任务意见" placeholder="办理意见" maxlength="4000"
-                                              t-att-disabled="props.busy" t-model="comments['project-' + task.id]"/>
+            <div class="wf-runtime-content">
+                <section class="wf-runtime-card" aria-label="流程进度">
+                    <h2>流程进度</h2>
+                    <div class="wf-timeline-scroll">
+                        <ol class="wf-timeline">
+                            <li t-foreach="progress" t-as="step" t-key="step.key" t-att-data-id="step.node"
+                                t-att-class="'wf-progress-' + step.state"
+                                t-att-aria-current="step.state === 'pending' || step.state === 'waiting' ? 'step' : undefined">
+                                <span class="wf-progress-dot" aria-hidden="true"/>
+                                <strong class="wf-progress-person" t-if="step.person" t-esc="step.person"/>
+                                <span class="wf-progress-label" t-esc="step.label"/>
+                                <span class="wf-progress-status" t-esc="step.status"/>
+                            </li>
+                        </ol>
+                    </div>
+                </section>
+                <section class="wf-runtime-card" aria-label="当前办理">
+                    <h2>当前办理</h2>
+                    <t t-if="approvals.length || pendingTasks.length || projectTasks.length">
+                        <t t-foreach="approvals" t-as="approval" t-key="approvalKey(approval)">
+                            <article class="wf-task">
+                                <h3 t-esc="approval.name"/>
+                                <t t-call="workflow_core.RuntimeReviewRows"/>
+                                <div t-if="approval.can_review" class="wf-runtime-actions">
+                                    <textarea class="form-control" aria-label="审批意见" placeholder="审批意见（拒绝时必填）"
+                                              maxlength="4000" t-att-disabled="props.busy" t-model="comments[approvalKey(approval)]"/>
                                     <div class="d-flex gap-2 mt-2">
                                         <button type="button" class="btn btn-primary" t-att-disabled="props.busy"
-                                                t-on-click="() => props.projectDecision(task.id, 'complete', comments['project-' + task.id] || '')">完成项目任务</button>
-                                        <button type="button" class="btn btn-outline-danger" t-att-disabled="props.busy"
-                                                t-on-click="() => props.projectDecision(task.id, 'cancel', comments['project-' + task.id] || '')">取消项目任务</button>
+                                                t-on-click="() => this.handleDecision(approval, 'approve')">通过</button>
+                                        <button type="button" class="btn btn-outline-danger"
+                                                t-att-disabled="props.busy || !comments[approvalKey(approval)]?.trim()"
+                                                t-on-click="() => this.handleDecision(approval, 'reject')">拒绝</button>
                                     </div>
                                 </div>
                             </article>
                         </t>
-                        <p t-else="" class="text-muted mb-0">暂无待办理事项</p>
-                    </section>
-                    <details t-if="approvalHistory.length" class="wf-runtime-card">
-                        <summary class="fw-semibold">审批记录</summary>
-                        <article t-foreach="approvalHistory" t-as="approval" t-key="approval.id" class="wf-task mt-3">
-                            <h3 t-esc="approval.name"/>
-                            <t t-call="workflow_core.RuntimeReviewRows"/>
+                        <article t-foreach="pendingTasks" t-as="task" t-key="task.id" class="wf-task">
+                            <h3 t-esc="task.name"/>
+                            <p class="text-muted mb-0" t-esc="task.assignee"/>
+                            <div t-if="task.can_complete" class="wf-runtime-actions">
+                                <textarea class="form-control" aria-label="办理意见" placeholder="办理意见" maxlength="4000"
+                                          t-att-disabled="props.busy" t-model="comments['task-' + task.id]"/>
+                                <button type="button" class="btn btn-primary mt-2" t-att-disabled="props.busy"
+                                        t-on-click="() => props.complete(task.id, comments['task-' + task.id] || '')">完成任务</button>
+                            </div>
                         </article>
-                    </details>
-                </div>
-                <section class="wf-runtime-card" aria-label="流程进度">
-                    <h2>流程进度</h2>
-                    <ol class="wf-progress">
-                        <li t-foreach="progress" t-as="step" t-key="step_index" t-att-data-id="step.node"
-                            t-att-class="'wf-progress-' + step.state">
-                            <span class="wf-progress-dot" aria-hidden="true"/>
-                            <span t-esc="step.label"/>
-                            <span class="text-muted small" t-esc="step.status"/>
+                        <article t-foreach="projectTasks" t-as="task" t-key="task.id" class="wf-task">
+                            <h3 t-esc="task.name"/>
+                            <p class="text-muted mb-0"><t t-esc="task.task_name"/> · <t t-esc="task.task_state"/></p>
+                            <p class="text-muted mb-0" t-esc="task.assignees.join('、')"/>
+                            <button type="button" class="btn btn-secondary mt-2" t-att-disabled="props.busy"
+                                    t-on-click="() => props.projectOpen(task.id)">打开项目任务</button>
+                            <div t-if="task.can_complete" class="wf-runtime-actions">
+                                <textarea class="form-control" aria-label="项目任务意见" placeholder="办理意见" maxlength="4000"
+                                          t-att-disabled="props.busy" t-model="comments['project-' + task.id]"/>
+                                <div class="d-flex gap-2 mt-2">
+                                    <button type="button" class="btn btn-primary" t-att-disabled="props.busy"
+                                            t-on-click="() => props.projectDecision(task.id, 'complete', comments['project-' + task.id] || '')">完成项目任务</button>
+                                    <button type="button" class="btn btn-outline-danger" t-att-disabled="props.busy"
+                                            t-on-click="() => props.projectDecision(task.id, 'cancel', comments['project-' + task.id] || '')">取消项目任务</button>
+                                </div>
+                            </div>
+                        </article>
+                    </t>
+                    <p t-else="" class="text-muted mb-0">暂无待办理事项</p>
+                </section>
+                <section class="wf-runtime-card" aria-label="审批记录" t-if="props.canvas.approvals?.length">
+                    <h2>审批记录</h2>
+                    <div t-if="approvalHistory.length" class="table-responsive">
+                        <table class="table align-middle mb-0">
+                            <thead><tr><th>审批环节</th><th>审批人</th><th>结果</th><th>时间</th><th>意见</th></tr></thead>
+                            <tbody>
+                                <tr t-foreach="approvalHistory" t-as="review" t-key="review.id">
+                                    <td>
+                                        <t t-esc="review.name"/>
+                                        <small t-if="review.multiLevel" class="text-muted ms-1">第 <t t-esc="review.sequence"/> 级</small>
+                                    </td>
+                                    <td t-esc="review.actor || review.reviewers.join('、')"/>
+                                    <td>
+                                        <span t-att-class="review.state === 'approved' ? 'badge text-bg-success' : 'badge text-bg-danger'"
+                                              t-esc="reviewStates[review.state]"/>
+                                    </td>
+                                    <td class="text-nowrap" t-esc="dateTime(review.reviewed_at) || '—'"/>
+                                    <td class="text-break" t-esc="review.comment || '—'"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p t-else="" class="text-muted mb-0">暂无审批记录</p>
+                </section>
+                <details t-if="history.length" class="wf-runtime-card wf-runtime-history">
+                    <summary class="fw-semibold">执行记录</summary>
+                    <ul class="list-unstyled mt-3">
+                        <li t-foreach="executionDetails" t-as="step" t-key="step.id" t-att-data-execution="step.node">
+                            <t t-esc="step.label"/> · <t t-esc="step.status"/>
+                        </li>
+                    </ul>
+                    <ol class="wf-log mb-0">
+                        <li t-foreach="history" t-as="log" t-key="log.id">
+                            <strong t-esc="events[log.event] || '执行记录'"/>
+                            <t t-if="log.node"> · <t t-esc="log.node"/></t>
+                            <span><t t-esc="log.actor"/> · <t t-esc="dateTime(log.at)"/></span>
+                            <p t-if="log.comment" t-esc="log.comment"/>
                         </li>
                     </ol>
-                    <details t-if="history.length" class="wf-runtime-history">
-                        <summary class="fw-semibold">执行记录</summary>
-                        <ol class="wf-log mt-3 mb-0">
-                            <li t-foreach="history" t-as="log" t-key="log.id">
-                                <strong t-esc="events[log.event] || '执行记录'"/>
-                                <t t-if="log.node"> · <t t-esc="log.node"/></t>
-                                <span><t t-esc="log.actor"/> · <t t-esc="log.at"/></span>
-                                <p t-if="log.comment" t-esc="log.comment"/>
-                            </li>
-                        </ol>
-                    </details>
-                </section>
+                </details>
             </div>
         </main>
     </t>
     <t t-name="workflow_core.RuntimeReviewRows">
         <ul class="list-unstyled mb-0">
-            <li t-foreach="approval.reviews" t-as="review" t-key="review.id">
+            <li t-foreach="approval.reviews.filter(review => review.id === approval.review_id)" t-as="review" t-key="review.id">
                 <span class="text-muted">第 <t t-esc="review.sequence"/> 级 · <t t-esc="reviewStates[review.state]"/></span>
                 <span class="ms-2" t-esc="review.actor || review.reviewers.join('、')"/>
                 <p t-if="review.comment" class="mb-1" t-esc="review.comment"/>

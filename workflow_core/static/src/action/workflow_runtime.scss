@@ -1,13 +1,6 @@
 .o_workflow_action {
     .wf-runtime { flex: 1; min-height: 0; overflow: auto; padding: 1.5rem; }
-    .wf-runtime-columns {
-        display: grid;
-        grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
-        align-items: start;
-        gap: 1rem;
-        max-width: 72rem;
-        margin: 0 auto;
-    }
+    .wf-runtime-content { max-width: 66rem; margin: 0 auto; }
     .wf-runtime-card {
         margin: 0 0 1rem;
         padding: 1.25rem;
@@ -17,24 +10,55 @@
     }
     .wf-runtime-card h3 { font-size: 1rem; margin-bottom: 0.5rem; }
     .wf-runtime-card .wf-task:last-child { margin-bottom: 0; padding-bottom: 0; border-bottom: 0; }
-    .wf-runtime-actions { margin-top: 0.75rem; }
-    .wf-progress { list-style: none; padding: 0; margin: 0; }
-    .wf-progress li {
-        display: grid;
-        grid-template-columns: 0.625rem minmax(0, 1fr) max-content;
-        align-items: center;
-        gap: 0.625rem;
-        padding: 0.625rem 0;
-        border-bottom: 1px solid var(--wf-border);
+    .wf-runtime-actions { max-width: 38rem; margin-top: 0.75rem; }
+    .wf-timeline-scroll { overflow-x: auto; }
+    .wf-timeline {
+        display: flex;
+        list-style: none;
+        width: max-content;
+        min-width: 100%;
+        padding: 0;
+        margin: 0;
     }
-    .wf-progress-dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--wf-muted); }
-    .wf-progress-done .wf-progress-dot { background: var(--wf-success); }
-    .wf-progress-waiting .wf-progress-dot, .wf-progress-running .wf-progress-dot { background: var(--wf-brand); }
-    .wf-progress-rejected .wf-progress-dot { background: var(--wf-danger); }
-    .wf-runtime-history { margin-top: 1rem; }
+    .wf-timeline li {
+        position: relative;
+        flex: 1 0 8rem;
+        display: grid;
+        justify-items: center;
+        align-content: start;
+        gap: 0.25rem;
+        max-width: 12rem;
+        padding: 0 0.5rem 0.25rem;
+        text-align: center;
+        overflow-wrap: anywhere;
+    }
+    .wf-timeline li:not(:last-child)::after {
+        position: absolute;
+        top: 0.625rem;
+        left: 50%;
+        width: 100%;
+        height: 2px;
+        background: var(--wf-border);
+        content: "";
+    }
+    .wf-progress-dot {
+        z-index: 1;
+        width: 0.875rem;
+        height: 0.875rem;
+        margin: 0.25rem 0 0.375rem;
+        border: 2px solid var(--wf-muted);
+        border-radius: 50%;
+        background: var(--wf-surface);
+    }
+    .wf-progress-done .wf-progress-dot, .wf-progress-approved .wf-progress-dot { border-color: var(--wf-success); background: var(--wf-success); }
+    .wf-progress-pending .wf-progress-dot, .wf-progress-running .wf-progress-dot { border-color: var(--wf-brand); background: var(--wf-brand); }
+    .wf-progress-rejected .wf-progress-dot { border-color: var(--wf-danger); background: var(--wf-danger); }
+    .wf-progress-person { color: color-mix(in srgb, var(--wf-brand) 80%, var(--wf-text)); }
+    .wf-progress-label, .wf-progress-status { font-size: 0.8125rem; }
+    .wf-progress-status { color: var(--wf-muted); }
     .wf-runtime summary { cursor: pointer; }
     @media (max-width: 740px) {
         .wf-runtime { padding: 0.75rem; }
-        .wf-runtime-columns { grid-template-columns: minmax(0, 1fr); gap: 0; }
+        .wf-timeline li { flex-basis: 7rem; }
     }
 }

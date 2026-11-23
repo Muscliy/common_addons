@@ -1,0 +1,13 @@
+<odoo>
+    <record id="todo_approvals" model="ir.actions.server">
+        <field name="name">待审批</field>
+        <field name="model_id" ref="workflow_core.model_workflow_instance"/>
+        <field name="group_ids" eval="[(4, ref('workflow_core.group_user'))]"/>
+        <field name="state">code</field>
+        <field name="code">action = model.action_todo_approvals()</field>
+    </record>
+    <menuitem id="menu_personal_todos" name="待办事项" parent="project_todo.menu_todo_todos"
+              action="project_todo.project_task_action_todo" sequence="10"/>
+    <menuitem id="menu_todo_approvals" name="待审批" parent="project_todo.menu_todo_todos"
+              action="todo_approvals" sequence="20" groups="workflow_core.group_user"/>
+</odoo>

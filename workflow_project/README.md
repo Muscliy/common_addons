@@ -59,3 +59,5 @@ YABO_RUNTIME=local YABO_ENV=test DYLD_LIBRARY_PATH=/opt/homebrew/opt/expat/lib .
 安装后用 `-u workflow_core,workflow_project --test-enable --test-tags=/workflow_core,/workflow_project`，增加独立 HTTP/gevent端口，运行行为和浏览器回归。可选审批联动测试仅在安装 workflow_tier_validation 时执行。并发测试提交独立专属记录并 finally 精确清理，仅限隔离测试库。前端 `npm run build` / `npm test` 在 workflow_core/frontend 执行，服务器无需 Node/CDN。
 
 用户原有业务数据不会自动绑定，不提供生产数据演示脚本；示例仅在测试/本地预览库显式创建。完整验证证据见 [实施方案](../docs/workflow-platform-plan.md)。第四阶段尚未完成的会签、退回、超时等能力不由本适配器补齐。
+
+启用分级审批适配器后，Odoo「待办 → 待审批」使用同一个审批列表。点击当前审批记录打开对应的流程办理页。
