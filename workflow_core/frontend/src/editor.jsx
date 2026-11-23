@@ -5,7 +5,7 @@ import { nodeTypes } from './node.jsx';
 import { Properties } from './properties.jsx';
 import { exampleGraph, labels, serialise } from './graph.js';
 
-function Canvas({ canvas, assignees = [], onChange, onReady, onComplete, busy }) {
+function Canvas({ canvas, assignees = [], onChange, onReady, onComplete, onDecision, busy }) {
     const [nodes, setNodes] = useState(canvas.graph.nodes);
     const [edges, setEdges] = useState(canvas.graph.edges);
     const [selection, setSelection] = useState(null);
@@ -82,7 +82,7 @@ function Canvas({ canvas, assignees = [], onChange, onReady, onComplete, busy })
         <Properties node={node} edge={edge} nodes={nodes} canvas={canvas} assignees={assignees} busy={busy}
             updateNode={(data) => canvas.can_edit && update(nodes.map((n) => n.id === node.id ? { ...n, data: { ...n.data, ...data } } : n), edges)}
             updateEdge={(data) => canvas.can_edit && update(nodes, edges.map((e) => e.id === edge.id ? { ...e, data: { ...e.data, ...data } } : e))}
-            remove={remove} complete={onComplete} />
+            remove={remove} complete={onComplete} decide={onDecision} />
     </div>;
 }
 

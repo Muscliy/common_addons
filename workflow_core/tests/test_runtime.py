@@ -1,4 +1,5 @@
 from odoo.exceptions import UserError
+from odoo.modules.module import get_manifest
 from odoo.tests import tagged
 
 from .common import WorkflowCase, edge, node, sequential
@@ -117,14 +118,7 @@ class TestRuntime(WorkflowCase):
             self.instance(definition, res_id=b.id)
 
     def test_core_is_independent_and_tables_are_namespaced(self):
-        self.assertFalse(
-            self.env["ir.module.module"].search(
-                [
-                    ("name", "in", ["base_tier_validation", "project"]),
-                    ("state", "=", "installed"),
-                ],
-            ),
-        )
+        self.assertEqual(set(get_manifest("workflow_core")["depends"]), {"web", "mail"})
         for name in (
             "definition",
             "version",

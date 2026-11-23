@@ -56,7 +56,7 @@ def activate(instance, node, record, actor_id: int) -> None:
     # 迭代自动节点, 避免长顺序图造成 Python 递归栈溢出。
     for _step in range(201):
         node.ensure_one()
-        waiting = node.kind == "task"
+        waiting = node._waits_for_input()
         activation = (
             instance.env["workflow.node.instance"]
             .sudo()
@@ -71,7 +71,7 @@ def activate(instance, node, record, actor_id: int) -> None:
         )
         instance._log("waiting" if waiting else "node_completed", actor_id, node)
         if waiting:
-            _create_task(instance, activation, record)
+            node._activate_input(instance, activation, record, actor_id)
             return
         if node.kind == "end":
             instance.write({"state": "done", "finished_at": fields.Datetime.now()})
@@ -91,7 +91,7 @@ def activate(instance, node, record, actor_id: int) -> None:
     raise UserError(instance.env._("流程超过自动推进步数限制。"))
 
 
-def _create_task(instance, activation, record) -> None:
+def create_task(instance, activation, record) -> None:
     assignee = activation.node_id.assignee_id or instance.starter_id
     company = instance.company_id
     if not assignee.active or assignee.share or company not in assignee.company_ids:

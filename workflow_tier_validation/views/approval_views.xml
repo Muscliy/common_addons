@@ -1,0 +1,23 @@
+<odoo>
+    <record id="approval_list" model="ir.ui.view">
+        <field name="name">workflow.approval.list</field><field name="model">workflow.approval</field>
+        <field name="arch" type="xml"><list create="0" delete="0">
+            <field name="name"/><field name="instance_id"/><field name="requested_by"/><field name="state" widget="badge"/>
+            <field name="create_date"/><button name="action_monitor" type="object" string="打开流程审批"/>
+        </list></field>
+    </record>
+    <record id="approval_form" model="ir.ui.view">
+        <field name="name">workflow.approval.form</field><field name="model">workflow.approval</field>
+        <field name="arch" type="xml"><form create="0" edit="0" delete="0">
+            <header><button name="action_monitor" type="object" string="打开流程审批" class="btn-primary"/><field name="state" widget="statusbar"/></header>
+            <sheet><group><field name="name"/><field name="instance_id"/><field name="requested_by"/><field name="finished_at"/></group>
+                <field name="review_ids" readonly="1"><list create="0" delete="0"><field name="sequence"/><field name="reviewer_ids" widget="many2many_tags"/><field name="status"/><field name="done_by"/><field name="comment"/></list></field>
+            </sheet>
+        </form></field>
+    </record>
+    <record id="my_approvals" model="ir.actions.act_window">
+        <field name="name">我的审批</field><field name="res_model">workflow.approval</field><field name="view_mode">list,form</field>
+        <field name="domain">[('state', '=', 'pending'), ('review_ids', 'any', [('reviewer_ids', 'in', [uid]), ('status', '=', 'pending')])]</field>
+    </record>
+    <menuitem id="menu_approvals" name="我的审批" parent="workflow_core.menu_root" action="my_approvals" sequence="25" groups="workflow_tier_validation.group_approver"/>
+</odoo>

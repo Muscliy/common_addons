@@ -1,10 +1,11 @@
-export const labels = { start: '开始', end: '结束', task: '人工任务', condition: '条件分支' };
-export const states = { waiting: '等待办理', done: '已完成', cancelled: '已取消', running: '进行中' };
+export const labels = { start: '开始', end: '结束', task: '人工任务', condition: '条件分支', approval: '审批' };
+export const states = { waiting: '等待办理', done: '已完成', cancelled: '已取消', running: '进行中', rejected: '已拒绝' };
 
 export function serialise(nodes, edges, viewport) {
     return {
         nodes: nodes.map(({ id, type, position, data }) => ({
-            id, type, position, data: { label: data.label, assignee_id: data.assignee_id || 0 },
+            id, type, position, data: { label: data.label, assignee_id: data.assignee_id || 0,
+                ...(data.config && Object.keys(data.config).length ? { config: data.config } : {}) },
         })),
         edges: edges.map(({ id, source, target, data }) => ({
             id, source, target, data: { default: !!data?.default, rule: data?.rule || {} },

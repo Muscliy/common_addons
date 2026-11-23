@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { RuleEditor } from './rule_editor.jsx';
 import { labels, states } from './graph.js';
+import { ApprovalEditor } from './approval_editor.jsx';
+import { ApprovalPanel } from './approval_panel.jsx';
 
 const events = { started: '流程启动', node_completed: '节点完成', waiting: '等待办理',
-    task_completed: '任务完成', completed: '流程完成', cancelled: '流程取消' };
+    task_completed: '任务完成', completed: '流程完成', cancelled: '流程取消',
+    approval_requested: '发起审批', approval_approved: '审批通过', approval_rejected: '审批拒绝' };
 
-export function Properties({ node, edge, nodes, canvas, assignees, updateNode, updateEdge, remove, complete, busy }) {
+export function Properties({ node, edge, nodes, canvas, assignees, updateNode, updateEdge, remove, complete, decide, busy }) {
     const [comment, setComment] = useState('');
     const editable = canvas.can_edit;
     return <aside className="wf-properties" aria-label="属性面板">
@@ -22,6 +25,8 @@ export function Properties({ node, edge, nodes, canvas, assignees, updateNode, u
                     {assignees.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
                 </select>
             </>}
+            {node.type === 'approval' && !canvas.instance_id && canvas.node_options?.approval && <ApprovalEditor config={node.data.config} disabled={!editable}
+                options={canvas.node_options?.approval} change={config => updateNode({ config })} />}
             {node.data.state && <p className="mt-3">{states[node.data.state]}</p>}
             {node.data.execution && <dl>
                 <dt>开始时间</dt><dd>{node.data.execution.started_at}</dd>
@@ -40,6 +45,8 @@ export function Properties({ node, edge, nodes, canvas, assignees, updateNode, u
         </> : <p className="text-muted">选择节点或连线</p>}
         {editable && (node || edge) && <button className="btn btn-outline-danger mt-3" onClick={remove}>删除{node ? '节点' : '连线'}</button>}
         {canvas.instance_id && <section className="wf-tasks">
+            {(canvas.approvals || []).map(approval => <ApprovalPanel key={`${approval.id}:${approval.review_id}`}
+                approval={approval} busy={busy} decide={decide} />)}
             <h2>任务</h2>
             {(canvas.tasks || []).map((task) => <div className="wf-task" key={task.id}>
                 <strong>{task.name}</strong><div>{task.assignee} · {task.state === 'pending' ? '待办理' : states[task.state]}</div>

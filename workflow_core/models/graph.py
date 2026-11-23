@@ -2,6 +2,7 @@ from odoo import api, fields, models
 from odoo.exceptions import UserError, ValidationError
 
 from odoo.addons.workflow_core.services.access import require_internal_write
+from odoo.addons.workflow_core.services.engine import create_task
 from odoo.addons.workflow_core.services.graph_validation import NODE_TYPES
 
 
@@ -58,6 +59,7 @@ class WorkflowNode(models.Model):
     name = fields.Char(required=True)
     kind = fields.Selection(NODE_TYPES, required=True)
     position = fields.Json(required=True)
+    config = fields.Json(default=dict)
     assignee_id = fields.Many2one("res.users", string="负责人", ondelete="restrict")
     _key_unique = models.Constraint(
         "UNIQUE(version_id, key)",
@@ -65,12 +67,25 @@ class WorkflowNode(models.Model):
     )
 
     def _canvas_data(self) -> dict:
-        return {
+        result = {
             "id": self.key,
             "type": self.kind,
             "position": self.position,
             "data": {"label": self.name, "assignee_id": self.assignee_id.id or 0},
         }
+        if self.config:
+            result["data"]["config"] = self.config
+        return result
+
+    def _validate_config(self, kind: str, config: dict, version) -> None:
+        if config:
+            raise ValidationError(self.env._("此节点类型不接受额外配置。"))
+
+    def _waits_for_input(self) -> bool:
+        return self.kind == "task"
+
+    def _activate_input(self, instance, activation, record, actor_id: int) -> None:
+        create_task(instance, activation, record)
 
 
 class WorkflowEdge(models.Model):

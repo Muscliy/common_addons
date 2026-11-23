@@ -4,7 +4,7 @@
             <header class="o_control_panel wf-toolbar">
                 <div class="wf-heading"><h1 t-esc="state.canvas?.title || '工作流'"/>
                     <span t-if="state.dirty" class="text-muted">未保存</span>
-                    <span t-if="state.canvas?.instance_state" class="badge text-bg-secondary" t-esc="({running: '进行中', done: '已完成', cancelled: '已取消'})[state.canvas.instance_state]"/>
+                    <span t-if="state.canvas?.instance_state" class="badge text-bg-secondary" t-esc="({running: '进行中', done: '已完成', cancelled: '已取消', rejected: '已拒绝'})[state.canvas.instance_state]"/>
                     <span t-elif="state.canvas" class="badge text-bg-secondary" t-esc="state.canvas.state === 'draft' ? '草稿' : '已发布'"/>
                 </div>
                 <div class="wf-actions">
