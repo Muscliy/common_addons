@@ -51,7 +51,7 @@ class TestDefinitionCode(WorkflowCase, HttpCase):
                     }
                     throw new Error('Template form did not save with an automatic code');
                 };
-                (await wait(() => document.querySelector('.o_list_button_add'))).click();
+                (await wait(() => document.querySelector('.o_control_panel button.o-kanban-button-new'))).click();
                 const name = await wait(() => document.querySelector('.o_field_widget[name=name] input'));
                 name.value = '自动编码界面验收';
                 name.dispatchEvent(new Event('input', { bubbles: true }));

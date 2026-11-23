@@ -1,4 +1,29 @@
 <odoo>
+    <record id="definition_kanban" model="ir.ui.view">
+        <field name="name">workflow.definition.kanban</field>
+        <field name="model">workflow.definition</field>
+        <field name="arch" type="xml">
+            <kanban records_draggable="0" quick_create="0">
+                <field name="published_version_id"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <field name="name" class="fw-bold fs-5 text-break"/>
+                            <span t-if="record.published_version_id.raw_value"
+                                  class="badge rounded-pill text-bg-success">已发布</span>
+                            <span t-else="" class="badge rounded-pill text-bg-secondary">未发布</span>
+                        </div>
+                        <field name="code" class="text-muted"/>
+                        <field name="company_id" groups="base.group_multi_company" class="text-muted"/>
+                        <footer>
+                            <button name="action_designer" type="object" class="btn btn-outline-primary btn-sm"
+                                    string="打开画布"/>
+                        </footer>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
     <record id="definition_list" model="ir.ui.view">
         <field name="name">workflow.definition.list</field><field name="model">workflow.definition</field>
         <field name="arch" type="xml">
@@ -39,6 +64,6 @@
         </field>
     </record>
     <record id="definitions" model="ir.actions.act_window">
-        <field name="name">流程模板</field><field name="res_model">workflow.definition</field><field name="view_mode">list,form</field>
+        <field name="name">流程模板</field><field name="res_model">workflow.definition</field><field name="view_mode">kanban,list,form</field>
     </record>
 </odoo>
