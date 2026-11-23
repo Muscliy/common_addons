@@ -1,3 +1,4 @@
+import re
 import uuid
 
 from odoo import api, fields, models
@@ -10,6 +11,8 @@ from odoo.addons.workflow_core.services.access import (
 )
 from odoo.addons.workflow_core.services.engine import start_instance
 
+FLOW_CODE_PATTERN = re.compile(r"[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*")
+
 
 class WorkflowDefinition(models.Model):
     _name = "workflow.definition"
@@ -18,7 +21,11 @@ class WorkflowDefinition(models.Model):
     _check_company_auto = True
 
     name = fields.Char(required=True)
-    code = fields.Char(required=True, copy=False)
+    code = fields.Char(
+        required=True,
+        copy=False,
+        help="仅使用英文字母、数字和分隔用的短横线，例如 FLOW-1。新建时留空可自动生成。",
+    )
     company_id = fields.Many2one(
         "res.company",
         required=True,
@@ -64,6 +71,14 @@ class WorkflowDefinition(models.Model):
                 and record.model_id.sudo().model not in self._allowed_business_models()
             ):
                 raise ValidationError(self.env._("业务模型未注册。"))
+
+    @api.constrains("code")
+    def _check_code_format(self):
+        for template in self:
+            if not FLOW_CODE_PATTERN.fullmatch(template.code or ""):
+                raise ValidationError(
+                    self.env._("流程编码仅允许字母、数字及分隔短横线，例如 FLOW-1。"),
+                )
 
     def _assign_codes(self, vals_list):
         default_code = self.default_get(["code"]).get("code")
