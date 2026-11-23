@@ -54,6 +54,13 @@ class TestApproval(ApprovalCase):
 
     def test_sequential_approval_and_explicit_review_retry(self):
         instance, approval = self.begin()
+        canvas = instance.version_id.with_user(self.viewer).get_canvas()
+        self.assertNotIn("approval", canvas["node_options"])
+        label_map = canvas["approval_labels"]["user"]
+        self.assertEqual(
+            label_map,
+            {self.first.id: self.first.name, self.second.id: self.second.name},
+        )
         self.assertEqual(
             approval.review_ids.sorted("sequence").mapped("status"),
             ["pending", "waiting"],

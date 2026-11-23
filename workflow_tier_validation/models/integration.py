@@ -2,12 +2,20 @@ from odoo import fields, models
 from odoo.exceptions import AccessError
 
 from odoo.addons.workflow_tier_validation.models.node import prevent_uninstall
-from odoo.addons.workflow_tier_validation.services.configuration import reviewer_fields
+from odoo.addons.workflow_tier_validation.services.configuration import (
+    configured_reviewer_names,
+    reviewer_fields,
+)
 from odoo.addons.workflow_tier_validation.services.scope import approval_scope
 
 
 class WorkflowVersion(models.Model):
     _inherit = "workflow.version"
+
+    def get_canvas(self) -> dict:
+        canvas = super().get_canvas()
+        canvas["approval_labels"] = configured_reviewer_names(self)
+        return canvas
 
     def _node_options(self) -> dict:
         result = super()._node_options()
@@ -58,6 +66,7 @@ class WorkflowInstance(models.Model):
                 {
                     "id": approval.id,
                     "name": approval.name,
+                    "node": approval.node_instance_id.node_id.key,
                     "state": approval.state,
                     "reviews": [
                         {

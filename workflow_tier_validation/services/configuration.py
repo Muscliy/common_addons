@@ -13,6 +13,27 @@ def reviewer_fields(version) -> dict:
     }
 
 
+def configured_reviewer_names(version) -> dict:
+    refs = {"user": set(), "group": set(), "field": set()}
+    for node in version.node_ids.filtered(lambda item: item.kind == "approval"):
+        for level in node.config.get("levels", ()):
+            refs[level["kind"]].add(level["ref"])
+    users = version.env["res.users"].sudo().browse(sorted(refs["user"])).exists()
+    groups = version.env["res.groups"].sudo().browse(sorted(refs["group"])).exists()
+    fields = reviewer_fields(version) if refs["field"] else {}
+    return {
+        "user": {
+            user.id: user.name
+            for user in users
+            if version.company_id in user.company_ids
+        },
+        "group": {group.id: group.name for group in groups},
+        "field": {
+            name: fields[name]["string"] for name in refs["field"] if name in fields
+        },
+    }
+
+
 def validate_config(config: dict, version) -> None:
     levels = config.get("levels")
     if (

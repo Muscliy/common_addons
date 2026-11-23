@@ -157,6 +157,8 @@ test('approval levels retain typed references and order after serialization', as
         node_options: { approval: { users: [{ id: 4, name: '审批人员' }],
             groups: [{ id: 7, name: '财务审批' }], fields: { user_id: { string: '负责人' } } } },
     });
+    const reviewers = page.locator('[data-id="task"] .wf-node-reviewers');
+    await expect(reviewers.locator('.wf-node-reviewer-name')).toHaveText('审批人员');
     await page.locator('[data-id="task"]').click();
     await page.getByLabel('第1级审批方式').selectOption('group');
     await page.getByLabel('第1级审批人', { exact: true }).selectOption('7');
@@ -164,6 +166,7 @@ test('approval levels retain typed references and order after serialization', as
     await page.getByLabel('第2级审批方式').selectOption('field');
     await page.getByLabel('第2级审批人', { exact: true }).selectOption('user_id');
     await page.getByRole('button', { name: '上移第2级' }).click();
+    await expect(reviewers).toHaveText('按 负责人 → 组 · 财务审批');
     const saved = await page.evaluate(() => window.getGraph());
     expect(saved.nodes[1].data.config.levels).toEqual([
         { kind: 'field', ref: 'user_id' }, { kind: 'group', ref: 7 },
@@ -171,8 +174,11 @@ test('approval levels retain typed references and order after serialization', as
 });
 
 test('monitor decisions carry fixed review ids and rejection requires a comment', async ({ page }) => {
-    await mount(page, false, graph, { instance_id: 9, approvals: [{ id: 12, name: '财务审批',
-        can_review: true, review_id: 31, reviews: [{ id: 31, sequence: 1, state: 'pending', reviewers: ['审批人员'] }] }] });
+    const initial = structuredClone(graph);
+    initial.nodes[1].type = 'approval';
+    await mount(page, false, initial, { instance_id: 9, approvals: [{ id: 12, name: '财务审批',
+        node: 'task', can_review: true, review_id: 31, reviews: [{ id: 31, sequence: 1, state: 'pending', reviewers: ['审批人员'] }] }] });
+    await expect(page.locator('[data-id="task"] .wf-node-reviewer-name')).toHaveText('审批人员');
     await expect(page.getByRole('button', { name: '拒绝', exact: true })).toBeDisabled();
     await page.getByRole('button', { name: '通过', exact: true }).click();
     expect(await page.evaluate(() => window.decisions)).toEqual([12, 31, 'approve', '']);
