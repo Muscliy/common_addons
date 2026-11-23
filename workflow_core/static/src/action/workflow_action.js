@@ -1,0 +1,154 @@
+import { Component, onMounted, onWillStart, onWillDestroy, useRef, useState } from "@odoo/owl";
+import { loadBundle } from "@web/core/assets";
+import { registry } from "@web/core/registry";
+import { useService } from "@web/core/utils/hooks";
+import { _t } from "@web/core/l10n/translation";
+import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
+import { SelectCreateDialog } from "@web/views/view_dialogs/select_create_dialog";
+import { useSetupAction } from "@web/search/action_hook";
+
+export class WorkflowAction extends Component {
+    static template = "workflow_core.Action";
+    static props = ["*"];
+
+    setup() {
+        this.orm = useService("orm");
+        this.action = useService("action");
+        this.notification = useService("notification");
+        this.dialog = useService("dialog");
+        this.container = useRef("canvas");
+        this.state = useState({ canvas: null, error: "", busy: false, dirty: false });
+        this.alive = true;
+        this.assignees = [];
+        this.requestKey = crypto.randomUUID();
+        this.params = this.props.action.params || {};
+        useSetupAction({
+            beforeLeave: () => this.confirmDiscard(),
+            beforeUnload: (event) => {
+                if (this.state.dirty) { event.preventDefault(); event.returnValue = ""; }
+            },
+        });
+        onWillStart(async () => {
+            await this.perform(async () => {
+                await loadBundle("workflow_core.canvas");
+                await this.load();
+            });
+        });
+        onMounted(() => this.renderCanvas());
+        onWillDestroy(() => { this.alive = false; this.bridge?.destroy(); this.bridge = null; });
+    }
+
+    async load() {
+        if (!this.alive) return;
+        const instance = this.params.instance_id;
+        const canvas = await this.orm.call(instance ? "workflow.instance" : "workflow.version",
+            instance ? "get_monitor" : "get_canvas", [[instance || this.params.version_id]]);
+        let assignees = canvas.assignees || [];
+        if (canvas.can_edit) assignees = await this.orm.call("workflow.version", "get_assignees", [[canvas.id]]);
+        if (!this.alive) return;
+        this.assignees = assignees;
+        this.state.canvas = canvas;
+        this.state.dirty = false;
+    }
+
+    renderCanvas() {
+        if (!this.alive || !this.state.canvas || !this.container.el || !globalThis.WorkflowCanvas) return;
+        const props = {
+            canvas: { ...this.state.canvas, can_edit: this.state.canvas.can_edit && !this.state.busy },
+            assignees: this.assignees, busy: this.state.busy,
+            onChange: () => { if (this.alive && this.state.canvas.can_edit) this.state.dirty = true; },
+            onReady: (serialise) => { this.serialise = serialise; },
+            onComplete: (id, comment) => this.complete(id, comment),
+        };
+        if (this.bridge) this.bridge.update(props);
+        else this.bridge = globalThis.WorkflowCanvas.mount(this.container.el, props);
+    }
+
+    async perform(callback) {
+        if (this.state.busy) return;
+        this.state.busy = true; this.state.error = ""; this.renderCanvas();
+        try {
+            await callback();
+        } catch (error) {
+            if (this.alive) this.state.error = error.data?.message || error.message || _t("操作失败，请重试。");
+        } finally {
+            if (this.alive) { this.state.busy = false; this.renderCanvas(); }
+        }
+    }
+
+    async save() {
+        if (!this.serialise || !this.state.canvas.can_edit) return;
+        const canvas = await this.orm.call("workflow.version", "save_graph", [
+            [this.state.canvas.id], this.serialise(), this.state.canvas.revision,
+        ]);
+        if (!this.alive) return;
+        this.state.canvas = canvas; this.state.dirty = false;
+    }
+
+    saveClick() { return this.perform(async () => { await this.save(); this.notification.add(_t("已保存"), { type: "success" }); }); }
+
+    validateClick() {
+        return this.perform(async () => {
+            if (this.state.dirty) await this.save();
+            await this.orm.call("workflow.version", "action_validate", [[this.state.canvas.id]]);
+            this.notification.add(_t("流程校验通过"), { type: "success" });
+        });
+    }
+
+    publishClick() {
+        return this.perform(async () => {
+            if (this.state.dirty) await this.save();
+            const canvas = await this.orm.call("workflow.version", "action_publish", [
+                [this.state.canvas.id], this.state.canvas.revision,
+            ]);
+            if (this.alive) { this.state.canvas = canvas; this.state.dirty = false; }
+        });
+    }
+
+    async start(resId = 0) {
+        await this.perform(async () => {
+            const result = await this.orm.call("workflow.definition", "action_start", [
+                [this.state.canvas.definition_id], resId, this.requestKey,
+            ]);
+            if (this.alive) await this.action.doAction(result);
+        });
+    }
+
+    startClick() {
+        if (!this.state.canvas.business_model) return this.start();
+        this.dialog.add(SelectCreateDialog, {
+            title: _t("选择业务记录"), resModel: this.state.canvas.business_model,
+            noCreate: true, multiSelect: false, onSelected: (ids) => this.start(ids[0]),
+        });
+    }
+
+    complete(id, comment) {
+        return this.perform(async () => {
+            await this.orm.call("workflow.task", "action_complete", [[id], comment]);
+            await this.load();
+        });
+    }
+
+    businessClick() {
+        return this.perform(async () => {
+            const result = await this.orm.call("workflow.instance", "action_business_record", [[this.params.instance_id]]);
+            if (this.alive) await this.action.doAction(result);
+        });
+    }
+
+    confirmDiscard() {
+        if (!this.state.dirty) return Promise.resolve(true);
+        return new Promise((resolve) => this.dialog.add(ConfirmationDialog, {
+            body: _t("画布有未保存的修改，是否放弃？"),
+            confirmLabel: _t("放弃修改"), confirm: () => resolve(true), cancel: () => resolve(false),
+        }));
+    }
+
+    async refreshClick() {
+        if (await this.confirmDiscard()) await this.perform(async () => {
+            await loadBundle("workflow_core.canvas"); await this.load();
+        });
+    }
+}
+
+registry.category("actions").add("workflow_core.canvas", WorkflowAction);

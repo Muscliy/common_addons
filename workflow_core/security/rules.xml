@@ -1,0 +1,90 @@
+<odoo>
+    <record id="definition_company" model="ir.rule">
+        <field name="name">Workflow definition: companies</field>
+        <field name="model_id" ref="model_workflow_definition" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="version_company" model="ir.rule">
+        <field name="name">Workflow version: companies</field>
+        <field name="model_id" ref="model_workflow_version" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="node_company" model="ir.rule">
+        <field name="name">Workflow node: companies</field>
+        <field name="model_id" ref="model_workflow_node" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="edge_company" model="ir.rule">
+        <field name="name">Workflow edge: companies</field>
+        <field name="model_id" ref="model_workflow_edge" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="instance_company" model="ir.rule">
+        <field name="name">Workflow instance: companies</field>
+        <field name="model_id" ref="model_workflow_instance" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="node_instance_company" model="ir.rule">
+        <field name="name">Workflow node_instance: companies</field>
+        <field name="model_id" ref="model_workflow_node_instance" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="task_company" model="ir.rule">
+        <field name="name">Workflow task: companies</field>
+        <field name="model_id" ref="model_workflow_task" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="execution_log_company" model="ir.rule">
+        <field name="name">Workflow execution_log: companies</field>
+        <field name="model_id" ref="model_workflow_execution_log" />
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+    <record id="instance_participant" model="ir.rule">
+        <field name="name">Workflow instance: participants</field>
+        <field name="model_id" ref="model_workflow_instance" />
+        <field name="groups" eval="[(4, ref('group_user'))]" />
+        <field name="domain_force">[('participant_ids', 'in', [user.id])]</field>
+    </record>
+    <record id="instance_viewer" model="ir.rule">
+        <field name="name">Workflow instance: viewers</field>
+        <field name="model_id" ref="model_workflow_instance" />
+        <field name="groups" eval="[(4, ref('group_viewer'))]" />
+        <field name="domain_force">[(1, "=", 1)]</field>
+    </record>
+    <record id="node_instance_participant" model="ir.rule">
+        <field name="name">Workflow node_instance: participants</field>
+        <field name="model_id" ref="model_workflow_node_instance" />
+        <field name="groups" eval="[(4, ref('group_user'))]" />
+        <field name="domain_force">[('instance_id.participant_ids', 'in', [user.id])]</field>
+    </record>
+    <record id="node_instance_viewer" model="ir.rule">
+        <field name="name">Workflow node_instance: viewers</field>
+        <field name="model_id" ref="model_workflow_node_instance" />
+        <field name="groups" eval="[(4, ref('group_viewer'))]" />
+        <field name="domain_force">[(1, "=", 1)]</field>
+    </record>
+    <record id="task_participant" model="ir.rule">
+        <field name="name">Workflow task: participants</field>
+        <field name="model_id" ref="model_workflow_task" />
+        <field name="groups" eval="[(4, ref('group_user'))]" />
+        <field name="domain_force">[('instance_id.participant_ids', 'in', [user.id])]</field>
+    </record>
+    <record id="task_viewer" model="ir.rule">
+        <field name="name">Workflow task: viewers</field>
+        <field name="model_id" ref="model_workflow_task" />
+        <field name="groups" eval="[(4, ref('group_viewer'))]" />
+        <field name="domain_force">[(1, "=", 1)]</field>
+    </record>
+    <record id="execution_log_participant" model="ir.rule">
+        <field name="name">Workflow execution_log: participants</field>
+        <field name="model_id" ref="model_workflow_execution_log" />
+        <field name="groups" eval="[(4, ref('group_user'))]" />
+        <field name="domain_force">[('instance_id.participant_ids', 'in', [user.id])]</field>
+    </record>
+    <record id="execution_log_viewer" model="ir.rule">
+        <field name="name">Workflow execution_log: viewers</field>
+        <field name="model_id" ref="model_workflow_execution_log" />
+        <field name="groups" eval="[(4, ref('group_viewer'))]" />
+        <field name="domain_force">[(1, "=", 1)]</field>
+    </record>
+</odoo>
