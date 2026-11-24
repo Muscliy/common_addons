@@ -4,6 +4,7 @@ from . import (
     test_definition_code,
     test_definition_presentation,
     test_definition_management,
+    test_definition_group,
     test_graph,
     test_parallel,
     test_parallel_browser,

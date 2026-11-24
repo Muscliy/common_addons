@@ -8,6 +8,7 @@
                 <field name="icon"/>
                 <field name="application_menu_id"/>
                 <field name="category_id"/>
+                <field name="group_id"/>
                 <field name="published_version_id"/>
                 <field name="department_id"/>
                 <templates>
@@ -23,6 +24,7 @@
                             <span t-else="" class="badge rounded-pill text-bg-secondary">未发布</span>
                         </div>
                         <field name="code" class="text-muted"/>
+                        <field name="group_id" class="text-muted"/>
                         <field name="category_id" class="text-muted"/>
                         <field name="manager_id" widget="many2one_avatar_user"/>
                         <field name="description" class="text-muted text-truncate"/>
@@ -44,7 +46,7 @@
     <record id="definition_list" model="ir.ui.view">
         <field name="name">workflow.definition.list</field><field name="model">workflow.definition</field>
         <field name="arch" type="xml">
-            <list><field name="name" string="流程名称"/><field name="application_menu_id"/><field name="category_id"/><field name="code" string="流程编码"/><field name="model_id" groups="workflow_core.group_designer"/><field name="published_version_id" string="当前发布版本"/>
+            <list><field name="name" string="流程名称"/><field name="application_menu_id"/><field name="group_id"/><field name="category_id"/><field name="code" string="流程编码"/><field name="model_id" groups="workflow_core.group_designer"/><field name="published_version_id" string="当前发布版本"/>
                 <field name="department_id"/>
                 <field name="company_id" string="所属公司" groups="base.group_multi_company"/>
                 <button name="action_designer" type="object" string="打开画布" icon="fa-sitemap"/>
@@ -65,6 +67,7 @@
                     <field name="can_manage" invisible="1"/>
                     <field name="icon" widget="image" class="oe_avatar" options="{'size': [96, 96]}" readonly="not can_manage"/>
                     <group><field name="name" string="流程名称" readonly="not can_manage"/><field name="application_menu_id" options="{'no_create': True, 'no_open': True}" readonly="not can_manage"/>
+                        <field name="group_id" options="{'no_create': True, 'no_open': True}" readonly="not can_manage"/>
                         <field name="category_id" domain="[('application_menu_id', '=', application_menu_id)]"
                                context="{'default_application_menu_id': application_menu_id}" invisible="not application_menu_id" readonly="not can_manage"/>
                         <field name="manager_id" widget="many2one_avatar_user" options="{'no_create': True, 'no_open': True}" readonly="not can_manage"/>
@@ -101,8 +104,10 @@
                 <field name="application_menu_id"/>
                 <field name="category_id"/>
                 <field name="manager_id"/>
+                <field name="group_id"/>
                 <group>
                     <filter name="group_application" string="所属模块" context="{'group_by': 'application_menu_id'}"/>
+                    <filter name="group_custom" string="流程分组" context="{'group_by': 'group_id'}"/>
                     <filter name="group_category" string="流程类别" context="{'group_by': 'category_id'}"/>
                 </group>
                 <filter name="company_scope" string="全公司" domain="[('department_id', '=', False)]"/>

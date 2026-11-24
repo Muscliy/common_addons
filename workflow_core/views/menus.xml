@@ -6,5 +6,7 @@
     <menuitem id="menu_pending" name="我的待办" parent="menu_root" action="my_pending" sequence="20" groups="workflow_core.group_executor"/>
     <menuitem id="menu_done" name="我的已办" parent="menu_root" action="my_done" sequence="30" groups="workflow_core.group_executor"/>
     <menuitem id="menu_instances" name="流程实例" parent="menu_root" action="instances" sequence="40"/>
-    <menuitem id="menu_categories" name="流程类别" parent="menu_root" action="categories" sequence="90" groups="workflow_core.group_designer"/>
+    <menuitem id="menu_configuration" name="配置" parent="menu_root" sequence="90" groups="workflow_core.group_designer"/>
+    <menuitem id="menu_groups" name="流程分组" parent="menu_configuration" action="groups" sequence="10" groups="workflow_core.group_designer"/>
+    <menuitem id="menu_categories" name="流程类别" parent="menu_configuration" action="categories" sequence="20" groups="workflow_core.group_designer"/>
 </odoo>

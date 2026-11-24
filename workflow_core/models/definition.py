@@ -22,6 +22,9 @@ class WorkflowDefinition(models.Model):
 
     name = fields.Char(required=True)
     description = fields.Text(string="流程说明")
+    group_id = fields.Many2one(
+        "workflow.group", string="流程分组", ondelete="restrict", index=True,
+    )
     icon = fields.Image(string="流程图标", max_width=256, max_height=256)
     application_menu_id = fields.Many2one(
         "ir.ui.menu",
