@@ -1,7 +1,7 @@
 import { describe, expect, test } from "@odoo/hoot";
 import { animationFrame } from "@odoo/hoot-mock";
 import { assets } from "@web/core/assets";
-import { mountWithCleanup, onRpc, patchWithCleanup } from "@web/../tests/web_test_helpers";
+import { contains, mountWithCleanup, onRpc, patchWithCleanup } from "@web/../tests/web_test_helpers";
 import { WorkflowAction } from "@workflow_core/action/workflow_action";
 import { defineMailModels } from "@mail/../tests/mail_test_helpers";
 
@@ -24,12 +24,33 @@ test("OWL mounts, updates and destroys the canvas once", async () => {
         },
     } });
     const host = await mountWithCleanup(WorkflowAction, { props: { action: { params: { version_id: 1 } } } });
+    expect(".o_workflow_action .o_control_panel .o_last_breadcrumb_item").toHaveText("Bridge test");
+    expect(".wf-toolbar").toHaveCount(0);
     expect(calls.filter(([name]) => name === "mount").length).toBe(1);
     await host.refreshClick(); await animationFrame();
     expect(calls.filter(([name]) => name === "mount").length).toBe(1);
     expect(calls.filter(([name]) => name === "update").length > 0).toBe(true);
     host.__owl__.app.destroy();
     expect(calls.filter(([name]) => name === "destroy").length).toBe(1);
+});
+
+test("native control panel keeps workflow status and protects unsaved navigation", async () => {
+    onRpc("workflow.version", "get_canvas", () => ({ ...canvas, definition_id: 7 }));
+    patchWithCleanup(assets, { loadBundle: async () => {} });
+    patchWithCleanup(globalThis, { WorkflowCanvas: { mount() {
+        return { update() {}, destroy() {} };
+    } } });
+    const host = await mountWithCleanup(WorkflowAction, { props: { action: { params: { version_id: 1 } } } });
+    expect(".o_control_panel .wf-heading").toHaveText("草稿");
+    host.state.dirty = true;
+    await animationFrame();
+    expect(".o_control_panel .wf-heading").toHaveText(/未保存\s+草稿/);
+    const pending = host.confirmDiscard();
+    await animationFrame();
+    expect(".modal").toHaveText(/画布有未保存的修改/);
+    await contains(".modal-footer .btn-secondary").click();
+    expect(await pending).toBe(false);
+    expect(host.state.dirty).toBe(true);
 });
 
 test("load failure is visible and retry can mount the canvas", async () => {

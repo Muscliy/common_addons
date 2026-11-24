@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="custom_web_components.ControlPanelBack" t-inherit="web.ControlPanel" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_control_panel_main_buttons')]" position="after">
+            <button t-if="breadcrumbs.length > 1" type="button"
+                    class="btn btn-outline-primary cwc_back_button flex-shrink-0 d-print-none"
+                    title="返回上一层" aria-label="返回上一层"
+                    t-on-click.prevent="() => breadcrumbs.at(-2).onSelected()">
+                <i class="oi oi-arrow-left" aria-hidden="true"/>
+            </button>
+        </xpath>
+    </t>
+    <t t-name="custom_web_components.BreadcrumbsBack" t-inherit="web.Breadcrumbs" t-inherit-mode="extension">
+        <!-- The shared control panel owns the back button on both desktop and mobile. -->
+        <xpath expr="//button[hasclass('o_back_button')]" position="attributes">
+            <attribute name="t-if">false</attribute>
+        </xpath>
+    </t>
+</templates>

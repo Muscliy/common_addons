@@ -12,6 +12,7 @@
     ],
     'assets': {
         'web.assets_backend': [
+            'custom_web_components/static/src/control_panel/*.xml',
             'custom_web_components/static/src/dashboard/dashboard.scss',
             'custom_web_components/static/src/dashboard/dashboard_layout.js',
             'custom_web_components/static/src/dashboard/dashboard_layout.xml',

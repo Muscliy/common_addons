@@ -1,16 +1,18 @@
-import { Component, onMounted, onPatched, onWillStart, onWillDestroy, useRef, useState } from "@odoo/owl";
+import { Component, onMounted, onPatched, onWillStart, onWillDestroy, reactive, useRef, useState, useSubEnv } from "@odoo/owl";
 import { loadBundle } from "@web/core/assets";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { _t } from "@web/core/l10n/translation";
 import { ConfirmationDialog } from "@web/core/confirmation_dialog/confirmation_dialog";
 import { useSetupAction } from "@web/search/action_hook";
+import { ControlPanel } from "@web/search/control_panel/control_panel";
+import { getDefaultConfig } from "@web/views/view";
 
 import { WorkflowRuntime } from "./workflow_runtime";
 
 export class WorkflowAction extends Component {
     static template = "workflow_core.Action";
-    static components = { WorkflowRuntime };
+    static components = { WorkflowRuntime, ControlPanel };
     static props = ["*"];
     static path = "workflow-designer";
     static recordParam = "version_id";
@@ -33,6 +35,15 @@ export class WorkflowAction extends Component {
         this.params = {
             [recordParam]: params[recordParam] || this.props.resId || params.resId,
         };
+        const config = { ...getDefaultConfig(), ...this.env.config };
+        if (config.breadcrumbs.length < 2) {
+            config.breadcrumbs = reactive([
+                { jsId: "workflow-parent", name: this.params.instance_id ? _t("流程实例") : _t("流程模板"),
+                    onSelected: () => this.openParent() },
+                ...config.breadcrumbs,
+            ]);
+        }
+        useSubEnv({ config });
         useSetupAction({
             beforeLeave: () => this.confirmDiscard(),
             beforeUnload: (event) => {
@@ -64,6 +75,7 @@ export class WorkflowAction extends Component {
         if (!this.alive) return;
         this.assignees = assignees;
         this.state.canvas = canvas;
+        this.env.config.setDisplayName(canvas.title || _t("工作流"));
         this.state.dirty = false;
     }
 

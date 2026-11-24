@@ -22,7 +22,6 @@
     color: var(--wf-text);
     background: var(--wf-background);
 
-    .wf-toolbar { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 20px; }
     .wf-heading, .wf-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
     h1 { font-size: 18px; margin: 0; }
     h2 { font-size: 15px; font-weight: 600; margin: 0 0 16px; }
@@ -196,7 +195,6 @@
         .wf-library, .wf-properties { display: none; position: absolute; top: 52px; bottom: 0; z-index: 5; width: 280px; max-width: 85vw; }
         .wf-panel-nodes .wf-library, .wf-panel-properties .wf-properties { display: block; }
         .wf-properties { right: 0; }
-        .wf-toolbar { padding: 12px; }
         .react-flow__minimap { display: none; }
     }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }

@@ -55,6 +55,12 @@
 
 ## 4. Integration & External APIs
 
+### Shared drilldown navigation
+
+- `static/src/control_panel/control_panel.xml` extends `web.ControlPanel`: all native lists, forms and client actions using the control panel show a back arrow beside the main buttons when the action breadcrumbs contain a parent.
+- The button invokes the penultimate breadcrumb's native `onSelected`, preserving action restoration, filters and unsaved-change protection. Root pages and modal actions without parent breadcrumbs have no back button.
+- Desktop and mobile share this entry; the original mobile breadcrumb arrow is suppressed to avoid a duplicate. The button stays outside the adaptive main-button dropdown and is hidden in print. No OCB core changes or database changes.
+
 ### ORM methods (internal authenticated users)
 
 - get_preference(component_type, model, view_id=False, key='default') → JSON object。
