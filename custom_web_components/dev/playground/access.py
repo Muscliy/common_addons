@@ -5,9 +5,9 @@ from odoo.exceptions import AccessError
 
 
 def playground_enabled() -> bool:
-    return (os.environ.get('YABO_RUNTIME') == 'local'
-            and os.environ.get('YABO_DATABASE_MODE') == 'local'
-            and os.environ.get('YABO_ENV') in ('local', 'test'))
+    return (os.environ.get('TYH_RUNTIME') == 'local'
+            and os.environ.get('TYH_DATABASE_MODE') == 'local'
+            and os.environ.get('TYH_ENV') in ('local', 'test'))
 
 
 def check_playground_access(env) -> None:

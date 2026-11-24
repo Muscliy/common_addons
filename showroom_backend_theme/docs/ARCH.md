@@ -31,7 +31,7 @@ None.
 
 ## 3. Business Logic & Data Flow
 
-1. `apps_enabled()` 仅在 `YABO_RUNTIME == "local"` 时返回真；不依赖 `YABO_ENV`、数据库模式或任何请求参数。
+1. `apps_enabled()` 仅在 `TYH_RUNTIME == "local"` 时返回真；不依赖 `TYH_ENV`、数据库模式或任何请求参数。
 2. 非本地运行时，菜单、窗口 action、DataSet RPC 及模块模型写路径共同拦截应用管理模型（`ir.module.*`, `base.module.*`, `base.import.module`）。窗口 action 的目标模型使用 `sudo` 读取，以保持 Odoo 核心对普通内部用户安全加载 action 的既有契约；该提权不改变 action 输出字段或目标业务模型权限。
 3. 在安装/升级时，品牌数据与 `_apply_tyj_branding` 更新系统助手、root 用户及 XML 定义邮件模板中的 Odoo 品牌文本；后台和登录页加载主题、导航栏、侧栏与白标前端资产。登录页使用 Odoo 原生登录布局，不依赖 Website。
 4. 品牌推广视图保留 `web.brand_promotion_message` 标准调用节点，仅覆盖消息上下文。
@@ -85,11 +85,11 @@ TYJ 助手头像由本模块的 `static/src/img/tyj-assistant.svg` 提供，避�
 
 - `AppAccessHome.web_client` 继承原生 Web 客户端路由：非本地环境访问包含 `apps` 的子路径返回 404。
 - `AppAccessDataSet.call_kw` 和 `call_button` 继承原生 Dataset 路由：应用管理模型的 RPC 在非本地环境抛出 `AccessError`。
-- 路由保留原生 Web 会话/鉴权配置；额外授权由 `YABO_RUNTIME` 服务端环境变量控制。无第三方 API。
+- 路由保留原生 Web 会话/鉴权配置；额外授权由 `TYH_RUNTIME` 服务端环境变量控制。无第三方 API。
 
 ## 5. Gotchas & Constraints
 
-- 默认关闭：缺少、为空或大小写不完全等于 `local` 的 `YABO_RUNTIME` 都禁用应用管理。
+- 默认关闭：缺少、为空或大小写不完全等于 `local` 的 `TYH_RUNTIME` 都禁用应用管理。
 - 限制只对请求路径生效，保留部署/初始化的受控 CLI 模块安装能力；本地模式也不提升原生用户权限。
 - 应用管理拦截必须同时覆盖菜单、action、HTTP 页面、Dataset RPC、按钮、zip 导入和直接 `state` 写入，避免新增旁路。
 - `ir.actions.act_window._get_action_dict` 的策略检查不得直接以当前业务用户读取 action 字段；核心方法本身使用 `sudo().read()` 并执行安全字段白名单，主题扩展必须保持相同权限边界。

@@ -6,7 +6,7 @@ from odoo.exceptions import AccessError
 
 
 def apps_enabled():
-    return os.environ.get("YABO_RUNTIME") == "local"
+    return os.environ.get("TYH_RUNTIME") == "local"
 
 
 def check_apps_access():

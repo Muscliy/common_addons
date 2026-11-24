@@ -67,7 +67,7 @@
 
 ### Process configuration
 
-- `YABO_RUNTIME=local` AND `YABO_DATABASE_MODE=local` AND `YABO_ENV in {local,test}` 才开放 Playground。
+- `TYH_RUNTIME=local` AND `TYH_DATABASE_MODE=local` AND `TYH_ENV in {local,test}` 才开放 Playground。
 - scripts/start_development.py 写入解析后的 mode，避免 CLI remote 被旧环境 local 误判；部署入口已有强制 server 标记。
 - 未知/缺失/staging/production/remote 均关闭；不依赖 host/IP/debug/context/system parameter。
 

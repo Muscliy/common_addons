@@ -12,7 +12,7 @@ from .test_playground import LOCAL_ENV
 class TestComponentBrowser(HttpCase):
     def test_server_rpc_denies_playground_but_allows_component_preferences(self):
         self.authenticate('admin', 'admin')
-        with patch.dict(os.environ, {**LOCAL_ENV, 'YABO_RUNTIME': 'server'}):
+        with patch.dict(os.environ, {**LOCAL_ENV, 'TYH_RUNTIME': 'server'}):
             for method, args in [('open_playground', []), ('search_read', [[]]),
                                  ('create', [{'name': 'DENIED'}]), ('get_view', [])]:
                 response = self.url_open('/web/dataset/call_kw', data=json.dumps({

@@ -27,9 +27,9 @@ sh scripts/start-local.sh local
 
 | 标记 | 允许值 | 来源 |
 | --- | --- | --- |
-| `YABO_RUNTIME` | `local` | 本地启动器固定设置；部署入口固定为 `server` |
-| `YABO_DATABASE_MODE` | `local` | 本地启动器写入解析后的实际模式，命令行优先于环境变量 |
-| `YABO_ENV` | `local` 或 `test` | 沿用根 `.env` / 终端变量；本地启动默认 `test` |
+| `TYH_RUNTIME` | `local` | 本地启动器固定设置；部署入口固定为 `server` |
+| `TYH_DATABASE_MODE` | `local` | 本地启动器写入解析后的实际模式，命令行优先于环境变量 |
+| `TYH_ENV` | `local` 或 `test` | 沿用根 `.env` / 终端变量；本地启动默认 `test` |
 
 缺失、未知、staging、production 或 remote 模式全部关闭。项目当前环境枚举是 local/test/production，没有独立 development/staging 值，未引入第二套环境体系。手动启动测试进程时需要显式设置以上三个变量；推荐使用统一启动器。判断不依赖 hostname、IP 或浏览器 context/system parameter。
 

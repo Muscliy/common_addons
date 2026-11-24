@@ -6,7 +6,7 @@ from odoo.tests.common import TransactionCase, new_test_user, tagged
 
 from odoo.addons.custom_web_components.dev.playground.access import playground_enabled
 
-LOCAL_ENV = {'YABO_RUNTIME': 'local', 'YABO_DATABASE_MODE': 'local', 'YABO_ENV': 'test'}
+LOCAL_ENV = {'TYH_RUNTIME': 'local', 'TYH_DATABASE_MODE': 'local', 'TYH_ENV': 'test'}
 
 
 @tagged('post_install', '-at_install')
@@ -15,7 +15,7 @@ class TestPlayground(TransactionCase):
         for runtime in ('', 'local', 'server'):
             for database in ('', 'local', 'remote'):
                 for environment in ('', 'local', 'test', 'development', 'staging', 'production'):
-                    with patch.dict(os.environ, YABO_RUNTIME=runtime, YABO_DATABASE_MODE=database, YABO_ENV=environment):
+                    with patch.dict(os.environ, TYH_RUNTIME=runtime, TYH_DATABASE_MODE=database, TYH_ENV=environment):
                         self.assertEqual(playground_enabled(), runtime == database == 'local' and environment in ('local', 'test'))
 
     def test_production_denies_menu_action_and_all_demo_data_paths(self):
@@ -24,7 +24,7 @@ class TestPlayground(TransactionCase):
         with patch.dict(os.environ, LOCAL_ENV):
             record = model.create({'name': 'LOCAL-TEST'})
             self.assertIn(root.id, self.env['ir.ui.menu']._visible_menu_ids())
-        for settings in [{'YABO_RUNTIME': 'server'}, {'YABO_ENV': 'production'}, {'YABO_DATABASE_MODE': 'remote'}]:
+        for settings in [{'TYH_RUNTIME': 'server'}, {'TYH_ENV': 'production'}, {'TYH_DATABASE_MODE': 'remote'}]:
             with patch.dict(os.environ, {**LOCAL_ENV, **settings}):
                 for debug in (False, True):
                     self.assertNotIn(root.id, self.env['ir.ui.menu']._visible_menu_ids(debug))
