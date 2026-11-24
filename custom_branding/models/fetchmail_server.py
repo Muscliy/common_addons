@@ -21,5 +21,5 @@ class FetchmailServer(models.Model):
 
         connection.__obj__._simple_command(
             "ID",
-            '("name" "Odoo" "version" "18.0" "vendor" "Yabo")',
+            '("name" "Odoo" "version" "18.0" "vendor" "tyh")',
         )
