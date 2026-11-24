@@ -1,6 +1,6 @@
 {
     "name": "泰缘极主题",
-    "version": '19.0.1.6.0',
+    "version": '19.0.1.6.1',
     "category": "Themes/Backend",
     "summary": "泰缘极后台主题",
     "author": "leehudev",

@@ -16,7 +16,7 @@ class WorkflowVersion(models.Model):
 
     def _node_options(self) -> dict:
         result = super()._node_options()
-        if not self.env.user.has_group("workflow_core.group_designer"):
+        if not self.definition_id._can_manage():
             return result
         projects = (
             self.env["project.project"].search(

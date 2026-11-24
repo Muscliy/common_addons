@@ -130,7 +130,7 @@ class WorkflowVersion(models.Model):
             "fields": condition_fields,
             "business_model": self.definition_id.model_id.sudo().model or "",
             "can_edit": self.state == "draft"
-            and self.env.user.has_group("workflow_core.group_designer"),
+            and self.definition_id._can_manage(),
             "can_publish": self.state == "draft"
             and self.env.user.has_group("workflow_core.group_publisher"),
             "can_start": self.state == "published"
@@ -146,7 +146,7 @@ class WorkflowVersion(models.Model):
     def get_assignees(self) -> list[dict]:
         self.ensure_one()
         self.check_access("read")
-        require_group(self, "group_designer")
+        self.definition_id._check_manage()
         group = self.env.ref("workflow_core.group_executor")
         users = (
             self.env["res.users"]
@@ -174,7 +174,7 @@ class WorkflowVersion(models.Model):
             raise UserError(self.env._("已发布版本不可编辑。"))
 
     def save_graph(self, graph: dict, revision: int) -> dict:
-        require_group(self, "group_designer")
+        self.definition_id._check_manage()
         with self.env.cr.savepoint():
             self._lock_draft()
             if type(revision) is not int or revision != self.revision:

@@ -1,0 +1,18 @@
+<odoo>
+    <record id="category_list" model="ir.ui.view">
+        <field name="name">workflow.category.list</field>
+        <field name="model">workflow.category</field>
+        <field name="arch" type="xml">
+            <list editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="application_menu_id" options="{'no_create': True, 'no_open': True}"/>
+            </list>
+        </field>
+    </record>
+    <record id="categories" model="ir.actions.act_window">
+        <field name="name">流程类别</field>
+        <field name="res_model">workflow.category</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>

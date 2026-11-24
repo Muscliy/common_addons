@@ -74,6 +74,7 @@ class WorkflowCase(TransactionCase):
             .create(
                 {
                     "name": "Test workflow",
+                    "manager_id": self.designer.id,
                     "model_id": self.env.ref("base.model_res_partner").id
                     if model
                     else False,

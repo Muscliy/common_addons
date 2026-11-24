@@ -2,6 +2,8 @@ from . import (
     test_browser,
     test_concurrency,
     test_definition_code,
+    test_definition_presentation,
+    test_definition_management,
     test_graph,
     test_parallel,
     test_parallel_browser,

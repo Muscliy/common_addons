@@ -1,7 +1,7 @@
 import re
 import uuid
 
-from odoo import api, fields, models
+from odoo import Command, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 from odoo.addons.workflow_core.services.access import (
@@ -21,6 +21,24 @@ class WorkflowDefinition(models.Model):
     _check_company_auto = True
 
     name = fields.Char(required=True)
+    description = fields.Text(string="流程说明")
+    icon = fields.Image(string="流程图标", max_width=256, max_height=256)
+    application_menu_id = fields.Many2one(
+        "ir.ui.menu",
+        string="所属模块",
+        domain=[("parent_id", "=", False)],
+        ondelete="set null",
+        help="关联费用、财务等现有应用，用于流程分类展示。",
+    )
+    category_id = fields.Many2one(
+        "workflow.category", string="流程类别", ondelete="restrict", index=True,
+    )
+    manager_id = fields.Many2one(
+        "res.users", string="流程管理员", required=True, ondelete="restrict",
+        default=lambda self: self.env.user, index=True,
+        domain="[('share', '=', False), ('active', '=', True), ('company_ids', 'in', [company_id])]",
+    )
+    can_manage = fields.Boolean(compute="_compute_can_manage")
     code = fields.Char(
         required=True,
         copy=False,
@@ -65,6 +83,49 @@ class WorkflowDefinition(models.Model):
         "UNIQUE(company_id, code)",
         "同一公司流程编码必须唯一。",
     )
+
+    def _can_manage(self) -> bool:
+        self.ensure_one()
+        return self.env.su or self.env.user.has_group("workflow_core.group_manager") or self.manager_id == self.env.user
+
+    @api.depends("manager_id")
+    @api.depends_context("uid")
+    def _compute_can_manage(self):
+        for template in self:
+            template.can_manage = template._can_manage()
+
+    def _check_manage(self) -> None:
+        self.check_access("write")
+        if any(not template._can_manage() for template in self):
+            raise AccessError(self.env._("只有指定流程管理员可以维护此流程。"))
+
+    def _ensure_manager_access(self) -> None:
+        # Assignment grants only the basic workflow role, never global designer/publisher rights.
+        managers = self.manager_id.filtered(lambda user: not user.has_group("workflow_core.group_user"))
+        if managers:
+            self.env.ref("workflow_core.group_user").sudo().write({
+                "user_ids": [Command.link(user.id) for user in managers],
+            })
+
+    @api.constrains("manager_id", "company_id")
+    def _check_manager(self):
+        for template in self:
+            manager = template.manager_id.sudo()
+            if not manager.active or manager.share or template.company_id not in manager.company_ids:
+                raise ValidationError(self.env._("流程管理员必须是所属公司的有效内部用户。"))
+
+    @api.constrains("application_menu_id", "category_id")
+    def _check_category(self):
+        for template in self:
+            if template.application_menu_id.parent_id:
+                raise ValidationError(self.env._("所属模块必须是 Odoo 应用根菜单。"))
+            if template.category_id and template.category_id.application_menu_id != template.application_menu_id:
+                raise ValidationError(self.env._("流程类别必须属于当前选择的模块。"))
+
+    @api.onchange("application_menu_id")
+    def _onchange_application(self):
+        if self.category_id.application_menu_id != self.application_menu_id:
+            self.category_id = False
 
     def _allowed_business_models(self) -> set[str]:
         models = {"res.partner"}
@@ -131,10 +192,11 @@ class WorkflowDefinition(models.Model):
             self.env["workflow.version"].sudo().create(
                 {"definition_id": record.id, "number": 1},
             )
+        records._ensure_manager_access()
         return records
 
     def write(self, vals):
-        require_group(self, "group_designer")
+        self._check_manage()
         if self._activation_fields() & vals.keys():
             raise AccessError(self.env._("请通过发布操作切换有效版本。"))
         if {"model_id", "company_id"} & vals.keys() and any(
@@ -142,7 +204,10 @@ class WorkflowDefinition(models.Model):
             for record in self
         ):
             raise UserError(self.env._("已有发布版本, 不能更改业务模型或公司。"))
-        return super().write(vals)
+        result = super().write(vals)
+        if "manager_id" in vals:
+            self._ensure_manager_access()
+        return result
 
     def unlink(self):
         if self.mapped("version_ids").filtered(lambda v: v.state == "published"):
@@ -204,8 +269,7 @@ class WorkflowDefinition(models.Model):
 
     def action_new_version(self) -> dict:
         self.ensure_one()
-        self.check_access("write")
-        require_group(self, "group_designer")
+        self._check_manage()
         with self.env.cr.savepoint():
             lock_record(self)
             latest = self.version_ids.sorted("number", reverse=True)[:1]

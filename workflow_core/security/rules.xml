@@ -1,4 +1,13 @@
 <odoo>
+    <record id="definition_maintenance" model="ir.rule">
+        <field name="name">Workflow definition: designated administrators</field>
+        <field name="model_id" ref="model_workflow_definition"/>
+        <field name="domain_force">[(1, '=', 1)] if user.has_group('workflow_core.group_manager') else [('manager_id', '=', user.id)]</field>
+        <field name="perm_read" eval="False"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
     <record id="token_company" model="ir.rule">
         <field name="name">Workflow token: companies</field><field name="model_id" ref="model_workflow_token"/>
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
