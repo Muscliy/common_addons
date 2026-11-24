@@ -1,0 +1,72 @@
+.o_workflow_definition_kanban {
+    .o_workflow_definition_card {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 8px;
+    }
+
+    .o_workflow_definition_content {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .o_workflow_definition_name {
+        display: block;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.5;
+        overflow-wrap: anywhere;
+    }
+
+    .o_workflow_definition_description {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        overflow: hidden;
+        white-space: pre-line;
+        overflow-wrap: anywhere;
+        margin-top: 4px;
+        color: var(--o-theme-muted, #{$o-main-color-muted});
+        line-height: 1.6;
+    }
+
+    .o_workflow_definition_manager {
+        margin-top: 12px;
+        max-width: 100%;
+    }
+
+    .o_field_workflow_definition_icon img {
+        width: 56px;
+        height: 56px;
+    }
+}
+
+.o_workflow_definition_list .o_data_row {
+    height: 64px;
+
+    > td {
+        vertical-align: middle;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+
+    .o_field_workflow_definition_icon img {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+.o_workflow_definition_kanban,
+.o_workflow_definition_list {
+    .o_field_workflow_definition_icon {
+        flex-shrink: 0;
+
+        img {
+            display: block;
+            object-fit: contain;
+            border-radius: 8px;
+            background: var(--o-theme-surface-soft, #{$o-gray-100});
+        }
+    }
+}

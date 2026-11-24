@@ -62,43 +62,33 @@ class TestWorkflowBrowser(HttpCase):
                 };
                 const templateCard = () => [...document.querySelectorAll('.o_kanban_view .o_kanban_record')]
                     .find(record => record.textContent.includes('Browser workflow'));
+                await wait(() => document.querySelector('.o_kanban_group'), 'template groups');
+                document.querySelectorAll('.o_kanban_group.o_column_folded .o_kanban_header')
+                    .forEach(header => header.click());
                 await wait(templateCard, 'default template kanban');
-                if (!templateCard().querySelector('.o_workflow_preview').textContent.includes('暂无流程节点')) {
-                    throw new Error('Empty templates must show an empty preview');
+                if (templateCard().querySelector('.o_workflow_preview, .badge, footer')) {
+                    throw new Error('Template cards must show only icon, name, description and manager');
                 }
-                const previewCard = () => [...document.querySelectorAll('.o_kanban_view .o_kanban_record')]
-                    .find(record => record.textContent.includes('Saved canvas preview'));
-                const previewCanvas = await wait(() => {
-                    const canvas = previewCard()?.querySelector('canvas[aria-label="流程画布预览"]');
-                    if (!canvas?.width || !canvas.height) return false;
-                    const pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
-                    return pixels.some((value, index) => index % 4 === 3 && value > 0) && canvas;
-                }, 'draw saved graph on the kanban card');
-                const rootSize = parseFloat(getComputedStyle(document.documentElement).fontSize);
-                const previewSize = parseFloat(getComputedStyle(previewCanvas).fontSize);
-                if (Math.abs(previewSize - 0.875 * rootSize) > 0.01) {
-                    throw new Error('Preview label size must follow the root font size');
+                const icon = templateCard().querySelector('img[name="icon"]');
+                if (!icon || !icon.src.endsWith('/workflow_core/static/description/icon.svg')) {
+                    throw new Error('Templates without uploaded icons must show the default icon');
                 }
-                const cardScale = previewCanvas.getContext('2d').getTransform();
-                if (cardScale.a !== cardScale.d) throw new Error('The card preview must scale uniformly');
-                previewCard().querySelector('button[aria-label="放大预览"]').click();
-                await wait(() => {
-                    const enlarged = document.querySelector('.modal .o_workflow_preview_large');
-                    const scale = enlarged?.getContext('2d').getTransform();
-                    return scale && scale.a > cardScale.a && scale.a === scale.d;
-                }, 'enlarged preview');
-                document.querySelector('.modal-header .btn-close').click();
-                await wait(() => !document.querySelector('.modal .o_workflow_preview_large'), 'close enlarged preview');
-                if (!templateCard().textContent.includes('未发布')) {
-                    throw new Error('The draft template card must show its publication status');
+                const manager = templateCard().querySelector('[name="manager_id"]');
+                if (!manager?.textContent.includes('workflow_ui')) {
+                    throw new Error('Template cards must display the manager name');
                 }
                 document.querySelector('.o_switch_view.o_list').click();
                 await wait(() => document.querySelector('.o_list_view'), 'list view switch');
+                const row = [...document.querySelectorAll('.o_data_row')]
+                    .find(record => record.textContent.includes('Browser workflow'));
+                if (!row?.querySelector('img[name="icon"]') || row.getBoundingClientRect().height < 64) {
+                    throw new Error('Template rows must show an icon with comfortable spacing');
+                }
                 document.querySelector('.o_switch_view.o_kanban').click();
                 await wait(templateCard, 'return to kanban');
-                const openCanvas = [...templateCard().querySelectorAll('button')]
-                    .find(el => el.textContent.trim() === '打开画布');
-                openCanvas.click();
+                templateCard().click();
+                await wait(() => document.querySelector('.o_form_view'), 'template detail');
+                document.querySelector('.o_form_view button[name="action_designer"]').click();
                 await click('插入示例');
                 if (!/\/workflow-designer\/[0-9]+$/.test(location.pathname)) {
                     throw new Error('Designer URL is missing the version ID');
@@ -131,7 +121,8 @@ class TestWorkflowBrowser(HttpCase):
                 const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
                 setter.call(name, '浏览器确认任务');
                 name.dispatchEvent(new Event('input', { bubbles: true }));
-                button('流程模板').click();
+                [...document.querySelectorAll('.o_breadcrumb .breadcrumb-item')]
+                    .find(item => item.textContent.trim() === '流程模板').click();
                 await wait(() => document.querySelector('.modal button[data-hotkey="x"]'), 'unsaved changes prompt');
                 document.querySelector('.modal button[data-hotkey="x"]').click();
                 await wait(() => !document.querySelector('.modal') && button('保存'), 'stay on canvas');
@@ -214,7 +205,7 @@ class TestWorkflowBrowser(HttpCase):
                 path,
                 f"""
                 (async () => {{
-                    const parent = [...document.querySelectorAll('.wf-heading button')]
+                    const parent = [...document.querySelectorAll('.o_breadcrumb .breadcrumb-item')]
                         .find(button => button.textContent.trim() === '{label}');
                     parent.click();
                     for (let i = 0; i < 400; i++) {{

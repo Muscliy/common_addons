@@ -4,40 +4,19 @@
         <field name="model">workflow.definition</field>
         <field name="arch" type="xml">
             <kanban records_draggable="0" quick_create="0" default_group_by="application_menu_id"
-                    group_create="0" group_edit="0" group_delete="0">
-                <field name="icon"/>
-                <field name="application_menu_id"/>
-                <field name="category_id"/>
-                <field name="group_id"/>
-                <field name="published_version_id"/>
-                <field name="department_id"/>
+                    group_create="0" group_edit="0" group_delete="0" class="o_workflow_definition_kanban">
                 <templates>
                     <t t-name="card">
-                        <div class="d-flex justify-content-between align-items-start gap-2">
-                            <div class="d-flex align-items-center gap-2">
-                                <field t-if="record.icon.raw_value" name="icon" widget="image" class="o_avatar" options="{'size': [40, 40]}"/>
-                                <img t-else="" src="/workflow_core/static/description/icon.svg" width="40" height="40" alt="流程"/>
-                                <field name="name" class="fw-bold fs-5 text-break"/>
+                        <div class="o_workflow_definition_card">
+                            <field name="icon" widget="workflow_definition_icon" readonly="1"
+                                   options="{'size': [56, 56]}"/>
+                            <div class="o_workflow_definition_content">
+                                <field name="name" class="o_workflow_definition_name"/>
+                                <field name="description" class="o_workflow_definition_description"/>
+                                <field name="manager_id" widget="many2one_avatar_user" readonly="1"
+                                       options="{'display_avatar_name': True}" class="o_workflow_definition_manager"/>
                             </div>
-                            <span t-if="record.published_version_id.raw_value"
-                                  class="badge rounded-pill text-bg-success">已发布</span>
-                            <span t-else="" class="badge rounded-pill text-bg-secondary">未发布</span>
                         </div>
-                        <field name="code" class="text-muted"/>
-                        <field name="group_id" class="text-muted"/>
-                        <field name="category_id" class="text-muted"/>
-                        <field name="manager_id" widget="many2one_avatar_user"/>
-                        <field name="description" class="text-muted text-truncate"/>
-                        <div class="d-flex flex-wrap gap-2 align-items-center text-muted">
-                            <field name="company_id" groups="base.group_multi_company"/>
-                            <field name="department_id" t-if="record.department_id.raw_value"/>
-                            <span t-else="">全公司</span>
-                        </div>
-                        <field name="canvas_preview" widget="workflow_canvas_preview"/>
-                        <footer>
-                            <button name="action_designer" type="object" class="btn btn-outline-primary btn-sm"
-                                    string="打开画布"/>
-                        </footer>
                     </t>
                 </templates>
             </kanban>
@@ -46,7 +25,10 @@
     <record id="definition_list" model="ir.ui.view">
         <field name="name">workflow.definition.list</field><field name="model">workflow.definition</field>
         <field name="arch" type="xml">
-            <list><field name="name" string="流程名称"/><field name="application_menu_id"/><field name="group_id"/><field name="category_id"/><field name="code" string="流程编码"/><field name="model_id" groups="workflow_core.group_designer"/><field name="published_version_id" string="当前发布版本"/>
+            <list class="o_workflow_definition_list">
+                <field name="icon" string="图标" widget="workflow_definition_icon" readonly="1"
+                       options="{'size': [40, 40]}" width="64px"/>
+                <field name="name" string="流程名称"/><field name="application_menu_id"/><field name="group_id"/><field name="category_id"/><field name="code" string="流程编码"/><field name="model_id" groups="workflow_core.group_designer"/><field name="published_version_id" string="当前发布版本"/>
                 <field name="department_id"/>
                 <field name="company_id" string="所属公司" groups="base.group_multi_company"/>
                 <button name="action_designer" type="object" string="打开画布" icon="fa-sitemap"/>

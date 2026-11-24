@@ -20,6 +20,7 @@
     "assets": {
         "web.assets_backend": [
             "workflow_core/static/src/action/*",
+            "workflow_core/static/src/definition/*",
             "workflow_core/static/src/preview/*",
         ],
         "workflow_core.canvas": [
