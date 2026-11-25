@@ -1,0 +1,29 @@
+// Overflow guard for a stale persisted width; not the drag limit (see chatter_resize.js).
+$showroom-chatter-overflow-guard: 320px;
+
+.o-mail-Form-chatter {
+    &.o-aside {
+        position: relative;
+    }
+
+    > .showroom_chatter_resize {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        inset-inline-start: -3px;
+        width: 7px;
+        z-index: 2;
+        cursor: col-resize;
+    }
+
+    // Only the side chatter is resizable; the bottom chatter keeps its default layout.
+    &:not(.o-aside) > .showroom_chatter_resize {
+        display: none;
+    }
+
+    &.o-aside[style*="--showroom-chatter-width"] {
+        flex: 0 0 var(--showroom-chatter-width);
+        // Clamp a stale width saved on a wider screen so the sheet never collapses.
+        max-width: calc(100% - #{$showroom-chatter-overflow-guard});
+    }
+}

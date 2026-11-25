@@ -40,6 +40,7 @@ None.
 6. `static/src/scss/primary_variables.scss` 在 Odoo 主变量前定义 `$o-exceed` 与 `$exceed`，并合并 `$theme-colors`。`static/src/scss/theme_colors.scss` 在共享 `web._assets_bootstrap` 的 `import_bootstrap.scss` 前加载，补齐强调文字、浅色背景、浅色边框、表格及对应 utility 映射；Odoo/Bootstrap 随后统一生成后台、前台及共享该 Bootstrap bundle 的报表样式。`theme_colors_backend.scss` 使用原生 `button-variant` mixin 补齐 `btn-fill-exceed`；不依赖后台专用的按钮选择器，以兼容移除后台 review 样式的报表 bundle。保留其他语义色映射及原生 hover、focus、active、disabled 和透明度规则。
 7. `static/src/scss/showroom_dialog.scss` 同时加载到后台和前台资源。所有 `.modal-footer` 操作区靠右；Odoo 技术弹框中会撑满宽度的 `footer`、表单编辑和查看按钮容器也分别靠右。外层覆盖 Odoo 响应式对齐 utility 的 `!important`，内层覆盖核心 dialog 样式。
 8. 后台导航栏和业务侧栏采用白色表面、深色文字及青色选中态。左上角企业标识、顶部 Odoo 原生分区及下拉菜单保持原有结构。侧栏应用名称仍选择应用；有可见子菜单的应用额外显示“…”按钮，按 `menuService.getMenuAsTree()` 展开分组卡片面板。每张卡片宽 200px，面板围绕被点击的按钮垂直居中并在视口边缘内贴边。先按单列渲染并测量整张卡片的高度；超过可用屏幕高度的第一张卡片及后续卡片移入第二列。首次定位和分列完成后才显示面板，并以短淡入过渡呈现，避免从默认位置跳到最终位置。分组内容用原生 `details` 的内容区域过渡；动画结束后重新测量列数和面板位置，避免按中间高度分列。面板以视口高度为上限，不设置内部滚动；分组卡片默认展开，也可通过标题收起。叶子菜单通过 `menuService.selectMenu()` 执行原生 action。切换应用、收起侧栏、点击面板外、按 Escape 或滚动侧栏时关闭面板。窄屏仍使用 Odoo 原生应用菜单。
+9. 表单视图侧边 chatter 支持拖拽调宽：`static/src/webclient/chatter_resize.js` 在 `FormCompiler` 编译期向 `.o_form_renderer > .o-mail-Form-chatter` 注入 7px 拖拽手柄，并 patch `FormRenderer` 处理拖拽。宽度写入 `localStorage` 键 `showroom_backend_theme.chatterWidth`，双击手柄清除并恢复默认。仅在 `.o-aside`（XXL）模式生效；拖拽下限采用 Odoo 原生基准（chatter 530px、表单 990px），持久化宽度另由 CSS `max-width` 兜底，防止窄屏溢出。组件卸载或窗口失焦时清理全局监听。`static/tests/chatter_resize.test.js` 覆盖手柄注入、拖拽持久化、双击复位与底部模式隐藏。
 
 ### Sidebar Bookmarks & History
 

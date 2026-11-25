@@ -1,6 +1,6 @@
 {
     "name": "泰缘极主题",
-    "version": '19.0.1.6.1',
+    "version": '19.0.1.6.2',
     "category": "Themes/Backend",
     "summary": "泰缘极后台主题",
     "author": "leehudev",
@@ -49,6 +49,8 @@
             "showroom_backend_theme/static/src/webclient/showroom_theme.scss",
             "showroom_backend_theme/static/src/webclient/sidebar_entries.scss",
             "showroom_backend_theme/static/src/scss/showroom_dialog.scss",
+            "showroom_backend_theme/static/src/webclient/chatter_resize.js",
+            "showroom_backend_theme/static/src/webclient/chatter_resize.scss",
         ],
         "web.assets_frontend": [
             "showroom_backend_theme/static/src/scss/showroom_branding.scss",
@@ -59,6 +61,7 @@
             "showroom_backend_theme/static/tests/theme_switcher.test.js",
             "showroom_backend_theme/static/tests/sidebar_entries.test.js",
             "showroom_backend_theme/static/tests/showroom_sidebar.test.js",
+            "showroom_backend_theme/static/tests/chatter_resize.test.js",
         ],
         "web.assets_web_dark": [
             ("prepend", "showroom_backend_theme/static/src/scss/dark_variables.scss"),
